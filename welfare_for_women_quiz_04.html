@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 퀴즈</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #b45309;
+        --bg-gray: #f4f6f8;
+        --success: #28a745;
+        --danger: #dc3545;
+    }
+    body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-gray); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 700px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 1.8rem; color: #14213d; font-weight: 800; margin-bottom: 10px; word-break: keep-all; }
+    .header p { color: #55657d; font-weight: bold; font-size: 1.1rem; margin: 0; }
+    .header .score-text { margin-top: 6px; color: #166534; font-size: 1rem; }
+
+    .quiz-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .q-type { display: inline-block; background: #e0e7f1; color: #14213d; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 15px; font-weight: 700; }
+    #question-text { font-weight: bold; font-size: 1.2rem; margin-bottom: 25px; word-break: keep-all; line-height: 1.4; color: #14213d; }
+
+    .option-btn { width: 100%; text-align: left; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; transition: 0.2s; line-height: 1.4; color: #2f3640; font-weight: 500; font-family: inherit; }
+    .option-btn:hover { background: #fff7ed; border-color: var(--primary); }
+    .option-btn:focus-visible, .btn-next:focus-visible, .result-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+    .option-btn.correct { background: #e6fffa; border-color: var(--success); color: var(--success); font-weight: bold; }
+    .option-btn.wrong { background: #fff5f5; border-color: var(--danger); color: var(--danger); opacity: 0.6; }
+
+    .btn-next { width: 100%; padding: 16px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; margin-top: 25px; display: none; font-size: 1.1rem; transition: 0.2s; font-family: inherit; }
+    .btn-next:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .hint-box, .exp-box { padding: 18px; border-radius: 10px; margin-top: 15px; display: none; line-height: 1.6; word-break: keep-all; font-size: 0.95rem; }
+    .hint-box { background: #fffbeb; border: 1px solid #fbd38d; color: #b45309; }
+    .exp-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+
+    .result-card { background: white; border-radius: 20px; padding: 40px; text-align: center; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .result-btn { width: 100%; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; font-weight: bold; transition: 0.2s; font-family: inherit; }
+    .result-btn:hover { background: #f3f6fa; }
+    .result-score { margin: 6px 0 4px; font-size: 3.4rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+    .result-detail { margin: 0 0 10px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    #result-msg { margin: 0 0 18px; line-height: 1.6; word-break: keep-all; color: #14213d; font-weight: 600; }
+    .missed { text-align: left; margin: 0 0 18px; padding: 10px 16px; border: 1px solid #e0e7f1; border-radius: 10px; }
+    .missed summary { cursor: pointer; font-weight: 700; color: #14213d; padding: 4px 0; }
+    .missed ol { margin: 10px 0 4px; padding-left: 26px; font-size: 0.95rem; line-height: 1.55; word-break: keep-all; color: #2f3640; }
+    .missed li { margin-bottom: 8px; }
+
+    /* 문제 화면 아래의 목록으로 돌아가기 버튼 */
+    .list-btn { width: 100%; padding: 14px; margin-top: 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: white; color: #14213d; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .list-btn:hover { background: #f3f6fa; }
+    .list-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid var(--danger); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; color: #14213d; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: var(--danger); }
+    .problem-list .warn .tag { color: var(--primary); }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="header">
+            <h1 id="lecture-title"></h1>
+            <p id="progress-text"></p>
+            <p id="score-text" class="score-text"></p>
+        </div>
+        <div class="quiz-box">
+            <div id="question-type" class="q-type">개념확인</div>
+            <div id="question-text"></div>
+            <div id="options-container"></div>
+
+            <div id="hint-box" class="hint-box">💡 <b>힌트:</b> <span id="hint-text"></span></div>
+            <div id="exp-box" class="exp-box">✅ <b>정답 및 해설:</b> <span id="exp-text"></span></div>
+
+            <button id="next-btn" class="btn-next" type="button" onclick="nextQuestion()">다음 문제로</button>
+        </div>
+
+        <button class="list-btn" type="button" onclick="goList()">🏠 목록으로 돌아가기</button>
+    </div>
+
+    <div id="result-screen" class="result-card">
+        <h2 id="result-title">🎊 학습을 마쳤습니다!</h2>
+        <p id="result-score" class="result-score"></p>
+        <p id="result-detail" class="result-detail"></p>
+        <p id="result-msg"></p>
+        <details id="missed-details" class="missed">
+            <summary id="missed-summary"></summary>
+            <ol id="missed-list"></ol>
+        </details>
+        <button id="retry-missed-btn" class="result-btn" type="button" style="background:var(--primary); color:white; border:none;" onclick="retryMissed()"></button>
+        <button class="result-btn" type="button" onclick="retryAll()">🔄 처음부터 다시 풀기</button>
+        <button class="result-btn" type="button" onclick="location.href='index.html'">🏠 목록으로 돌아가기</button>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 4, title: "생애주기별 젠더 이슈" };
+</script>
+
+<!-- ③ 퀴즈 데이터: 노트북LM이 만든 const quizData = [...]; 를 통째로 덮어쓰세요.
+     아래 1문항은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     문제마다 type, q, o, a, h, e 가 모두 있어야 하고, a는 첫 번째 보기가 0입니다. -->
+<script>
+    const quizData = [
+        {
+       "type": "개념확인",
+    "q": "여성복지에서 '생애주기 접근(Life-course approach)'이 필요한 이유로 적절하지 않은 것은? [워크북 p.51, 교재 p.55-56, 2025 기말]",
+    "o": [
+      "여성의 생애 단계별 어려움은 서로 영향을 주고받으며 누적·확대되는 경향이 있다.",
+      "생애 초기 경험은 이후 단계의 선택과 결과에 중요한 영향을 미친다.",
+      "여성의 생애주기별 문제는 각 단계별로 분리해 개별적으로만 다루어야 한다.",
+      "성평등을 실현하기 위해서는 전체 생애과정을 아우르는 장기적 시각이 필요하다."
+    ],
+    "a": 2,
+    "h": "생애주기 접근은 각 단계의 불평등이 서로 분리된 것이 아니라 연쇄적으로 연결되고 축적됨을 파악하는 시각입니다.",
+    "e": "여성의 생애주기별 문제는 각 단계가 단절된 것이 아니라 연쇄적으로 영향을 미치며 불평등이 축적·재생산되므로 전체 생애과정을 잇는 통합적·장기적 접근이 필요합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "중년기(40~50대) 여성의 젠더 이슈에 대한 설명으로 옳지 않은 것은? [워크북 p.51, 교재 p.60-62, 2025 기말]",
+    "o": [
+      "경력단절 후 노동시장 재진입의 어려움이 크게 나타난다.",
+      "유리천장 및 유리절벽 등으로 인한 지속적인 임금격차가 누적된다.",
+      "가사 및 돌봄노동의 불평등이 완전히 해소되지 않고 지속된다.",
+      "정치 참여와 대표성이 크게 확대되어 공적 의사결정에서 영향력이 높다."
+    ],
+    "a": 3,
+    "h": "중년기 여성은 노동시장 불평등과 다중 돌봄 부담에 노출되어 있으나 정치적 대표권과 고위직 진출은 여전히 미흡합니다.",
+    "e": "중년 여성은 경력단절 후 재취업의 난항, 임금격차 축적, 부모·자녀 양쪽을 부양하는 다중 돌봄 압박을 겪지만, 공적 의사결정에서의 대표성은 미흡한 실정입니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "대한민국 국민연금제도의 기능과 특징에 대한 설명으로 적절한 것은? [워크북 p.52, 교재 p.66-67, 2025 기말]",
+    "o": [
+      "보험료 납부 기간과 액수와 상관없이 동일한 급여가 지급된다.",
+      "장애·사망 등으로 소득이 상실되거나 줄어들었을 때 일정 급여를 지급하는 기능도 있다.",
+      "개인연금 형태로, 가입 여부는 전적으로 자율에 맡겨진다.",
+      "국민연금의 급여는 노령연금 한 종류만으로 구성된다."
+    ],
+    "a": 1,
+    "h": "국민연금은 노령연금 외에도 주 소득자 사망 시 유족연금, 장애 발생 시 장애연금을 지급하는 공적 사회보험입니다.",
+    "e": "국민연금은 강제 가입 공적연금으로 노령에 따른 소득 상실 보전(노령연금)뿐만 아니라 장애 및 사망 위험에 대비한 장애연금, 유족연금 제도를 포함합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "아동·청소년기에 가정 및 학교에서 강화되는 성별 고정관념이 여성의 생애 전반에 미치는 영향은? [교재 p.56-57, 워크북 p.40-41]",
+    "o": [
+      "전통적 성역할을 내면화하여 진로 선택 및 전공 결정에 한계를 낳고, 여성의 노동시장 성별 분리를 고착화함",
+      "여성의 이공계 대학 진학률을 100%로 상승시킴",
+      "청소년기 모든 남성의 사적 권리를 완전 몰수함",
+      "학교 현장에서의 성차별이 100% 자동 해소됨"
+    ],
+    "a": 0,
+    "h": "어린 시절 학습된 성역할 고정관념이 여성의 진로와 전공 선택을 제한하여 성별 직종 분리로 연결됩니다.",
+    "e": "아동·청소년기의 성별 고정관념 교육과 사회화는 여성이 특정 진로나 전공에 진출하는 것을 제약하여, 성인기 노동시장의 성별 분리와 임금격차의 기초를 형성합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "어머니 세대가 겪었던 무급 가사·돌봄 전담과 경제적 불평등이 딸 세대로 이어지는 현상을 나타낸 시각은? [교재 p.56, 워크북 p.41]",
+    "o": [
+      "성불평등의 세대 간 전이 및 재생산 (Intergenerational Transmission)",
+      "탈가족화의 완결 구조",
+      "시민권의 순차적 확장",
+      "성별영향평가의 자동화"
+    ],
+    "a": 0,
+    "h": "생애사적 불평등이 당대에 그치지 않고 가정 내 성역할 수행 관찰을 통해 다음 세대로 전이되는 구조입니다.",
+    "e": "생애주기 관점은 젠더 불평등이 당대 개인의 문제에 그치지 않고, 교육과 가족 내 관습을 통해 딸 세대로 전이·재생산됨을 진단합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "청년기(20~30대) 여성들이 노동시장 진입 단계에서 경험하는 대표적 젠더 불평등은? [교재 p.58, 워크북 p.41-42]",
+    "o": [
+      "채용 면접에서의 결혼·출산 계획 질문 등 성차별적 불이익과 남성 선호 관행",
+      "대기업 사장으로의 100% 우선 임용 특혜",
+      "모든 청년 여성에게 적용되는 무상 주택 공급",
+      "청년 남성의 노동시장 진출 전면 금지"
+    ],
+    "a": 0,
+    "h": "채용 과정에서 여성이라는 이유로 직무와 무관한 사생활 질문이나 채용 점수 조작 불이익을 받는 현실입니다.",
+    "e": "청년 여성은 노동시장 진입 시 채용 성차별, 남성 중심 조직 문화, 동일가치노동에 대한 성별 임금격차를 일찍부터 경험합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "2030 청년 여성들이 결혼, 임신, 육아를 앞두고 노동시장에서 겪는 정서적·구조적 불안 요인은? [교재 p.59, 워크북 p.42]",
+    "o": [
+      "임신·육아로 인한 직장 내 불이익 및 M-커브 현상으로 이어지는 경력단절에 대한 강력한 불안",
+      "퇴직금이 매월 10배 인상되는 기대감",
+      "정년이 만 90세로 연장되는 안정감",
+      "가사노동 분담률이 100% 면제되는 평화"
+    ],
+    "a": 0,
+    "h": "육아 휴직 신청 시 눈치나 해고 위협, 출산 후 승진 배제 등으로 인한 경력단절 공포입니다.",
+    "e": "청년 여성은 결혼 및 출산 시 노동시장에서 밀려날지 모른다는 경력단절 불안을 크게 겪으며, 이는 비혼 및 초저출생 선택으로 이어지는 원인이 됩니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "청년 여성 1인 가구가 독립 생활 시 대도시에서 겪는 대표적 삶의 위협 요인은? [교재 p.59-60, 워크북 p.42-43]",
+    "o": [
+      "주거 침입, 스토킹, 불법촬영 등 젠더 기반 폭력 피해에 대한 일상적 불안과 열악한 원룸 주거비 부담",
+      "대저택 유지에 들어가는 무제한 청소비 부담",
+      "모든 청년 여성에게 무료로 공급되는 전담 경호원 비용",
+      "주거지 내 모든 남성의 법적 출입 차단"
+    ],
+    "a": 0,
+    "h": "1인 가구 안전망 미비와 치안·주거 범죄 및 디지털 성범죄에 대한 일상적 공포를 상기하세요.",
+    "e": "청년 여성 1인 가구는 높은 주거 비용뿐만 아니라 주거 침입, 스토킹, 불법촬영 등 치안 범죄와 젠더 폭력 위험에 크게 노출되어 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "친밀한 관계(교제 상대 등)에서 발생하는 신체적·정신적·성적 폭력을 뜻하는 용어는? [교재 p.60, 워크북 p.43]",
+    "o": [
+      "데이트 폭력 (친밀한 관계 폭력)",
+      "산업 재해 폭력",
+      "노사 갈등 폭력",
+      "관료제적 통제"
+    ],
+    "a": 0,
+    "h": "연인이나 교제 관계에서 피해자의 자율성을 통제하고 행해지는 폭력 현상입니다.",
+    "e": "데이트 폭력은 친밀한 관계에서 상대방을 통제하고 신체적·정신적 해를 입히는 젠더 기반 폭력으로 청년 여성의 안전을 크게 위협합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "중년기(40~50대) 여성이 미성년/성인 자녀 양육과 연로한 친정·시댁 부모 부양을 동시에 짊어지는 현상은? [교재 p.62-63, 워크북 p.44]",
+    "o": [
+      "샌드위치 세대의 다중 돌봄 부담",
+      "빈 둥지 증후군",
+      "유리 에스컬레이터",
+      "아빠 할당제"
+    ],
+    "a": 0,
+    "h": "자녀 세대와 부모 세대 사이에 끼여 이중·삼중의 무급 돌봄을 짊어지는 중년 여성의 위치입니다.",
+    "e": "중년 여성은 성인 자녀의 거두기와 연로 부모 수발, 여기에 손자녀 육아까지 겹쳐 '샌드위치 세대'로서 중첩된 다중 돌봄 압박을 받습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "자녀가 성장하여 가정을 떠나 독립한 후 중년 여성들이 느끼는 심리적 상실감과 정체성 위기는? [교재 p.63-64, 워크북 p.44-45]",
+    "o": [
+      "빈 둥지 증후군 (Empty Nest Syndrome)",
+      "유리 절벽 현상",
+      "노노케어 현상",
+      "M-커브 현상"
+    ],
+    "a": 0,
+    "h": "평생 돌봄자로 살아온 여성이 자녀 독립 후 겪는 허탈감과 정체성 혼란입니다.",
+    "e": "빈 둥지 증후주는 양육자로서의 역할이 소멸하며 중년 여성이 경험하는 상실감과 정체성 혼란으로, 새로운 자아실현 및 사회적 재교육 지원이 필요합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "중년기 여성이 육아 후 노동시장에 다시 진입할 때 마주하는 고용 구조의 현실은? [교재 p.61, 워크북 p.43-44]",
+    "o": [
+      "이전 경력을 인정받지 못하고 식당, 마트, 단순 서비스, 돌봄 등 저임금·비정규직 일자리로 재진입함",
+      "대기업 사장이나 공기업 임원으로 100% 스카우트됨",
+      "청년층 노동자보다 5배 높은 고임금을 지급받음",
+      "모든 중년 여성의 취업이 법적으로 금지됨"
+    ],
+    "a": 0,
+    "h": "경력단절 후 단시간, 단순 노무, 저임금 불안정 일자리로 떨어지는 M-커브 후반부 구조입니다.",
+    "e": "중년 여성은 30대 경력단절 이후 재취업 시 기존 직무 경력이 단절되어 비정규직 및 단순 서비스·돌봄 저임금 노동으로 재진입하는 한계를 지닙니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "중년기 여성들이 폐경 및 갱년기를 맞이하며 경험하는 생리적·정서적 변화와 이에 대한 복지적 대책은? [교재 p.64, 워크북 p.45]",
+    "o": [
+      "호르몬 변화에 따른 갱년기 우울증 및 건강 위험에 대비한 성인지적 건강 증진 및 정서 지원 프로그램 제공",
+      "모든 갱년기 여성의 병원 출입을 법적으로 금지",
+      "갱년기 여성에게 세금 100배 과세",
+      "갱년기를 개인적 정신 질환으로 치부하고 사적 방임"
+    ],
+    "a": 0,
+    "h": "신체적 신진대사 변화와 신체·정신건강을 돕는 통합적 보건 복지 서비스의 필요성입니다.",
+    "e": "중년 여성의 갱년기는 단순 생리적 현상을 넘어 신체적·정신적 고통을 동반하므로, 지역사회 보건소 및 복지관을 통한 건강·상담 관리가 필요합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "고령기(60대 이상) 여성 노인이 겪는 소득 실태 및 빈곤율의 특성은? [교재 p.64-65, 워크북 p.45-46]",
+    "o": [
+      "평생 무급 가사 전담으로 인한 공적 연금 미달과 성별 임금격차 누적으로 OECD 최고 수준의 독보적 노후 빈곤 위험 노출",
+      "여성 노인의 소득이 남성 노인보다 10배 높은 상태",
+      "여성 노인 빈곤율이 0%로 세계에서 가장 풍요로움",
+      "모든 여성 노인이 대기업 대주주로서 불로소득을 누림"
+    ],
+    "a": 0,
+    "h": "평생 헌신한 무급 노동이 노년기 연금 미달로 이어져 극심한 생계형 저임금 노동에 몰리는 현실입니다.",
+    "e": "여성 노인은 평생 수행한 가사·돌봄이 연금 가입 기간으로 인정받지 못하고 남편 사별 후 독자 소득원이 없어 심각한 소득 빈곤을 겪습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성 노인과 남성 노인의 기대수명(Average Life Expectancy) 및 건강수명(Healthy Life Expectancy) 비교 실태는? [교재 p.65-66, 워크북 p.46]",
+    "o": [
+      "여성이 남성보다 오래 살지만(기대수명 높음), 아픈 상태로 지내는 기간이 길어 실질적 건강수명은 짧고 삶의 질이 낮음",
+      "남성 노인의 수명이 여성 노인보다 20년 이상 길다.",
+      "여성 노인은 사망 직전까지 단 1일도 아프지 않다.",
+      "남녀 노인의 기대수명과 건강수명이 100% 완벽히 일치한다."
+    ],
+    "a": 0,
+    "h": "여성이 '오래 살지만 아프게 오래 사는' 유병 장수 구조를 파악하세요.",
+    "e": "여성 노인은 평균 수명은 남성보다 길지만, 만성 질환에 시달리는 기간이 길어 건강수명이 짧고 신체적·의료적 수발 욕구가 높습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "남성 노인과 여성 노인이 아플 때 그를 수발해 주는 '주 수발자(Caregiver)' 구성의 차이는? [교재 p.66, 워크북 p.46]",
+    "o": [
+      "남성 노인은 아내(배우자)가 수발하는 비중이 높고, 여성 노인은 사별 등으로 자녀나 공적 요양 서비스에 의존함",
+      "여성 노인은 전원 남편이 수발을 전담함",
+      "남성 노인은 수발자가 0명으로 홀로 해결함",
+      "남녀 노인 모두 대기업 기사가 수발을 전담함"
+    ],
+    "a": 0,
+    "h": "여성은 남편 임종까지 수발을 제공하나 사별 후 본인이 아플 땐 자녀나 시설에 의존하게 되는 성별 차이입니다.",
+    "e": "남성 노인은 배우자인 아내로부터 수발을 받는 비율이 높은 반면, 여성 노인은 기대수명이 길어 남편 사별 후 자녀나 전문 요양 시설에 수발을 의존합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "노년기 거주 상태에서 여성 노인이 남성 노인에 비해 현저히 높은 비중을 보이는 주거 형태 2가지는? [교재 p.66-67, 워크북 p.46-47]",
+    "o": [
+      "독거노인(홀몸가구) 주거 및 노인 요양시설 입소 비중",
+      "자가 대저택 독점 소유 비중",
+      "남성 노인 전용 기숙사 거주 비중",
+      "해외 리조트 자가 상주 비중"
+    ],
+    "a": 0,
+    "h": "사별 후 홀로 남거나 몸이 아파 시설에 입소하는 비율이 여성 노인에게서 훨씬 높음을 기억하세요.",
+    "e": "여성 노인은 오래 살고 홀로 남겨지는 기간이 길어 남성 노인에 비해 홀몸 독거노인 비중과 요양시설 입소 비율이 높습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "대한민국 국민연금 급여 종류 중 남성과 여성 수급자 간의 성별 비율 불균형 현상은? [교재 p.67, 워크북 p.47]",
+    "o": [
+      "독자적 노동 이력에 따른 노령연금은 남성이 다수이고, 배우자 사망에 따른 유족연금은 여성이 다수를 차지함",
+      "노령연금 수급자의 99%가 여성이다.",
+      "유족연금 수급자의 100%가 남성이다.",
+      "노령연금과 유족연금 모두 남녀 비율이 50:50이다."
+    ],
+    "a": 0,
+    "h": "남성 중심 전업 노동자 모델로 설계되어 여성이 파생적 유족연금에 주로 의존하는 구조입니다.",
+    "e": "국민연금에서 노령연금은 남성 정규직 중심 가입 이력으로 남성 수급자가 많고, 여성은 남편 사망 후 수급하는 유족연금 비중이 높습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "국민연금 가입 기간을 추가 인정해 주는 크레디트 제도 중 '성별 불균형'이 존재한다고 지적받는 항목은? [교재 p.68, 워크북 p.47]",
+    "o": [
+      "군복무 크레디트(남성 위주 혜택)는 첫째 자녀부터 즉시 적용되는 반면, 출산 크레디트는 둘째 자녀부터 적용되어 혜택이 불리함",
+      "출산 크레디트가 전 국민에게 매월 1억 원을 주기 때문",
+      "군복무 크레디트가 법적으로 전면 폐지되었기 때문",
+      "두 크레디트 모두 여성에게만 혜택이 주어지기 때문"
+    ],
+    "a": 0,
+    "h": "첫째 자녀 출산 시에는 크레디트가 적용되지 않고 둘째부터 적용되어 출산 여성 혜택이 미흡한 한계입니다.",
+    "e": "현행 국민연금 출산 크레디트는 둘째 자녀부터 인정되어 첫째 자녀부터 즉시 인정되는 군복무 크레디트에 비해 성인지적 형평성이 떨어진다는 지적을 받습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "2008년 도입되어 65세 이상 노인 등에게 신체활동 및 가사 지원 급여를 제공해 가족의 수발 부담을 덜어주는 사회보험은? [교재 p.68-69, 워크북 p.47-48]",
+    "o": [
+      "노인장기요양보험제도",
+      "국민기초생활보장제도",
+      "산업재해보상보험제도",
+      "고용보험제도"
+    ],
+    "a": 0,
+    "h": "장기요양 등급판정을 통해 요양보호 서비스를 제공하는 대한민국 5대 사회보험 중 하나입니다.",
+    "e": "노인장기요양보험은 혼자 일상생활이 어려운 고령 노인에게 요양 급여를 제공하여 노후 안정과 가족(특히 여성)의 돌봄 부담을 경감시킵니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "노인장기요양보험 현장에서 요양 서비스를 제공하는 핵심 인력인 '요양보호사'의 젠더적 노동 특성은? [교재 p.69, 워크북 p.48]",
+    "o": [
+      "종사자의 90% 이상이 중·고령 여성으로 구성되어 있으며, 가사·돌봄의 여성화와 저임금·불안정 노동 구조에 노출됨",
+      "종사자의 100%가 20대 청년 남성으로 구성됨",
+      "요양보호사의 임금이 대기업 임원 수준으로 높음",
+      "요양보호사의 모든 사회적 세금이 100% 면제됨"
+    ],
+    "a": 0,
+    "h": "사적 돌봄의 공영화 과정에서 돌봄 노동이 다시 저임금 여성 일자리로 고착화된 현상입니다.",
+    "e": "요양보호사는 절대다수가 중년 및 고령 여성으로 구성되어 돌봄 노동의 가치가 저평가되고 저임금·감정노동에 시달리는 젠더적 한계를 보입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "생애주기 접근(Life-course perspective)이 제시하는 생애 단계 간의 구조적 연관성은? [교재 p.55, 워크북 p.40]",
+    "o": [
+      "이전 생애 단계의 젠더 불평등 경험(채용 차별, 돌봄 전담)이 다음 생애 단계(노후 소득 빈곤, 수발 부재)로 누적·확대됨",
+      "각 생애 단계는 100% 독립되어 아무런 영향을 주지 않음",
+      "노년기의 빈곤은 전적으로 개인의 게으름 때문임",
+      "청년기 경험이 노년기 수명에 주는 영향은 0%임"
+    ],
+    "a": 0,
+    "h": "청년기·중년기의 차별과 경력단절이 노년기 빈곤으로 잇따라 누적되는 생애사적 메커니즘입니다.",
+    "e": "생애주기 관점은 한 생애 단계의 불평등이 다음 단계로 누적·확대되어 노년기 여성 빈곤이라는 결과로 이어짐을 입증합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "아동·청소년기 학교 현장에서 성평등 교육을 강화하기 위해 요구되는 정책 과제는? [교재 p.57, 워크북 p.41]",
+    "o": [
+      "교과서 내 성역할 고정관념 삽화 및 문구 수정과 체계적인 성인지 교육 의무화",
+      "남학생과 여학생의 대화를 법적으로 금지",
+      "모든 체육 수업의 전면 폐지",
+      "학교 내 성평등 동아리의 전면 해산"
+    ],
+    "a": 0,
+    "h": "교육 자료와 학교 문화 속에 숨겨진 성차별적 편견과 고정관념을 개혁하는 과제입니다.",
+    "e": "아동·청소년기 성인지 교육은 교과서 교정, 교원 성인지 감수성 향상, 성평등 교육 제도화를 통해 성별 고정관념 형성을 조기에 방지해야 합니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "4050 경력단절 중년 여성의 사회 재진입을 지원하기 위해 전국에 설치·운영 중인 공적 기구는? [교재 p.62, 워크북 p.44]",
+    "o": [
+      "여성새로일하기센터 (새일센터)",
+      "국민연금 심사위원회",
+      "한국은행 금융센터",
+      "지방 노동위원회"
+    ],
+    "a": 0,
+    "h": "경력단절 여성에게 직업 상담, 직업 훈련, 취업 연계를 제공하는 공적 전문 기구입니다.",
+    "e": "여성새로일하기센터(새일센터)는 임신·육아 등으로 경력이 단절된 여성에게 종합적인 취업 지원 서비스를 제공하는 정부 지원 기관입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "중년 여성이 맞벌이와 함께 손자녀 육아(손주 돌봄)까지 맡게 되는 '황혼 육아'의 복지적 문제는? [교재 p.63, 워크북 p.44]",
+    "o": [
+      "노년기 신체적 퇴행성 질환 악화와 개인 노후 삶의 소멸 및 돌봄 노동에 대한 무급 전가",
+      "손자녀 돌봄 시 국가가 매월 1억 원을 주기 때문",
+      "손주를 돌보는 할머니의 건강이 100% 즉시 완치되기 때문",
+      "모든 손자녀가 조부모의 사적 소유물로 등록되기 때문"
+    ],
+    "a": 0,
+    "h": "공적 보육 체계 미비로 조모의 건강상 피로와 무급 노동이 강요되는 황혼 육아 문제입니다.",
+    "e": "황혼 육아는 공적 돌봄의 사각지대를 중년·고령 여성의 무급 노동으로 메우는 현상으로, 조모의 신체적·정신적 고통을 가중시킵니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "이혼 시 전업주부 여성이 남편의 국민연금 일부를 나눠 받을 수 있도록 보장한 사회보장 제도는? [교재 p.68, 워크북 p.47]",
+    "o": [
+      "분할연금 제도 (국민연금법 제64조)",
+      "유족연금 제도",
+      "장애연금 제도",
+      "퇴직연금제도"
+    ],
+    "a": 0,
+    "h": "혼인 기간 중 가사·돌봄 기여를 인정하여 노령연금을 분할 수급하게 한 제도입니다.",
+    "e": "분할연금 제도는 혼인 기간이 5년 이상인 경우 가사노동의 공헌을 인정하여 이혼한 배우자의 노령연금액을 나누어 수급할 수 있게 한 성인지적 제도입니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "국민연금 분할연금을 청구하여 지급받기 위한 법적 필수 수급 요건 2가지는? [교재 p.68, 워크북 p.47]",
+    "o": [
+      "배우자와의 법적 혼인 기간이 5년 이상일 것 & 배우자가 노령연금 수급권을 취득했을 것",
+      "혼인 기간이 50년 이상일 것 & 자녀가 10명 이상일 것",
+      "이혼 후 즉시 재혼하지 않았을 것 & 자녀의 성씨를 변경했을 것",
+      "배우자의 사적 주식을 100% 소유했을 것"
+    ],
+    "a": 0,
+    "h": "혼인 유지 기간 5년 이상과 배우자의 노령연금 수급권 형성이 핵심 요건입니다.",
+    "e": "분할연금은 혼인 기간 5년 이상 유지, 이혼 완료, 본인 및 전 배우자의 노령연금 수급 연령 도달 요건을 갖출 때 청구 가능합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "소득이 없는 전업주부 여성이 스스로 보험료를 납부하여 독자적 국민연금 수급권을 확보할 수 있게 한 제도는? [교재 p.68, 워크북 p.47]",
+    "o": [
+      "국민연금 임의가입 제도",
+      "공공부조 강제 수용 제도",
+      "기초연금 박탈 제도",
+      "사적 보험 일원화"
+    ],
+    "a": 0,
+    "h": "무소득 배우자가 자발적으로 가입하여 노후 1인 1연금을 준비할 수 있는 제도입니다.",
+    "e": "임의가입 제도는 소득이 없는 전업주부가 자발적으로 국민연금에 가입하여 독자적 노후 연금 수급권을 형성하도록 돕습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "65세 이상 노인 중 소득인정액 하위 70%에게 지급되어 빈곤 여성 노인에게 주요 생계원이 되는 제도는? [교재 p.67, 워크북 p.47]",
+    "o": [
+      "기초연금제도 (기초연금법)",
+      "두루누리 수당",
+      "장애인연금",
+      "실업급여"
+    ],
+    "a": 0,
+    "h": "조세 수입을 재원으로 하여 기여 이력 없이 지급되는 무기여 공적 보조 연금입니다.",
+    "e": "기초연금은 국민연금 미가입 및 저연금 상태에 놓인 여성 노인들에게 노후 최소 생계 안전망 역할을 담당합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "청년기 여성들이 직장 생활 중 경험하는 '유리천장'과 '유리벽'의 차이는? [교재 p.61, 워크북 p.43]",
+    "o": [
+      "유리천장은 고위 관리직 승진을 가로막는 장벽이고, 유리벽은 승진 가능성이 낮은 특정 부서(지원 부서)로 배제하는 배치 장벽이다.",
+      "유리천장이 부서 배치 장벽이고, 유리벽이 승진 장벽이다.",
+      "둘 다 건축물 유리창 청소 노동을 뜻한다.",
+      "유리천장은 남성만 겪고 유리벽은 여성만 겪는다."
+    ],
+    "a": 0,
+    "h": "승진을 가로막는 고위직 장벽(천장)과 핵심 부서 진입을 막는 부서 배치 장벽(벽)의 구분을 파악하세요.",
+    "e": "유리천장은 여성의 고위직 승진 차단을, 유리벽은 여성 근로자를 승진 기회가 적은 보조·지원 부서로 성별 배치하는 관행을 의미합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성이 평생 가사·돌봄을 수행했음에도 노년에 홀로 남겨져 우울증과 자살 위험에 노출되는 사회적 배경은? [교재 p.66, 워크북 p.46]",
+    "o": [
+      "사회적 관계망의 단절, 경제적 극빈, 질병 수발자 부재 및 독거 상태가 복합 작용하기 때문",
+      "여성 노인의 사적 재산이 너무 많아 관리가 힘들기 때문",
+      "여성 노인 전원에게 법적으로 사회 활동을 금지시켰기 때문",
+      "여성 노인의 건강 상태가 남성보다 10배 우수하기 때문"
+    ],
+    "a": 0,
+    "h": "빈곤, 만성 질환, 사별 후 고립이라는 삼중 고통이 노년기 정신건강을 위협함을 기억하세요.",
+    "e": "여성 노인의 높은 우울과 자살 위험은 평생 누적된 성불평등, 노후 독자 소득 결여, 사별 후 고독이라는 구조적 배제의 결과입니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "여성의 생애주기별 불평등을 해결하기 위해 국가 예산 편성 시 성별 영향을 사전에 평가 반영하는 제도는? [교재 p.70, 워크북 p.49]",
+    "o": [
+      "성인지 예산제도 (국가재정법 제16조)",
+      "조세 감면 특별법",
+      "지방채 발행제도",
+      "예비비 지출제도"
+    ],
+    "a": 0,
+    "h": "예산이 남녀에게 미칠 영향을 미리 분석하여 성평등한 방식으로 예산을 배분하는 제도입니다.",
+    "e": "성인지 예산제도는 국가 예산이 여성과 남성에게 미치는 다선적 영향을 사전 점검하여 생애주기별 젠더 불평등을 완화하는 도구입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "청년기 여성의 동일가치노동 동일임금 원칙이 노동 현장에서 제대로 준수되지 않을 때 생애 전반에 미치는 후과(결과)는? [교재 p.58, p.71, 워크북 p.42, p.50]",
+    "o": [
+      "청년기부터 임금격차가 축적되어 국민연금 보험료 납부액 저하와 노년기 연금 빈곤으로 직결됨",
+      "청년 여성이 40대에 대기업 사장이 됨",
+      "남성 근로자의 연금액이 전액 삭감됨",
+      "국가 재정이 파산함"
+    ],
+    "a": 0,
+    "h": "청년기 임금 차별이 평생에 걸친 자산 및 연금 격차로 스노우볼처럼 불어남을 강조합니다.",
+    "e": "청년기의 성별 임금격차는 단기적 소득 차이에 그치지 않고, 국민연금 보험료 적립액을 낮추어 생애 후반부 여성 노인 빈곤의 결정적 원인이 됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "중년 여성이 가정 내 경제적 주 생계부양자(가장) 역할을 맡게 되는 비율이 늘어난 사회적 배경은? [교재 p.62, 워크북 p.44]",
+    "o": [
+      "남편의 조기 퇴직·실직·사망·이혼 및 가구 해체로 인한 여성 가장 증가",
+      "모든 남성이 법적으로 일을 하지 않게 되었기 때문",
+      "국가가 중년 여성에게만 무상 생계비를 10억 원 주기 때문",
+      "중년 남성의 고용률이 100%로 상승했기 때문"
+    ],
+    "a": 0,
+    "h": "이혼, 남편의 실직 및 조기 퇴직 등으로 여성 한부모 및 여성 가장 가구가 늘어난 현실입니다.",
+    "e": "중년 여성 가장의 증가는 노동시장에서 남성 외벌이 모델이 해체되고 실직, 이혼 등으로 여성이 생계를 전담해야 하는 가구가 늘어났기 때문입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "고령기 여성 노인의 '노노케어' 현상을 줄이기 위해 가장 시급한 국가 복지 과제는? [교재 p.66, p.69, 워크북 p.46, p.48]",
+    "o": [
+      "국공립 장기요양 시설 확충 및 공적 방문 요양 서비스를 확대하여 사적 수발 부담을 사회화함",
+      "노 노간의 간병을 법적으로 전면 의무화함",
+      "모든 요양보호사를 전면 해고함",
+      "60대 이상 노인의 병원 입원을 금지함"
+    ],
+    "a": 0,
+    "h": "노인이 노인을 돌보는 피로를 덜기 위해 공적 요양보호 서비스를 대폭 확충하는 방안입니다.",
+    "e": "노노케어의 폐단을 막기 위해서는 공적 요양 서비스의 질을 높이고 요양 인력을 국공립으로 확충하여 노노 수발의 중압감을 덜어주어야 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "생애주기별 복지 지원이 성공하기 위해 갖추어야 할 서비스 체계의 기본 원칙은? [교재 p.71-72, 워크북 p.50]",
+    "o": [
+      "생애 단계별(아동-청년-중년-노년) 불평등을 잇는 단절 없는 연속성과 포괄적 전문성 확보",
+      "각 생애 단계를 철저히 분리하여 1회성 시혜금 지급으로 종료",
+      "모든 서비스를 민간 자선단체에 100% 위탁 처리",
+      "여성 복지 예산을 국방부 예산으로 전액 통합"
+    ],
+    "a": 0,
+    "h": "단절된 개입이 아닌 생애 전체를 잇는 연계성과 전문성을 확보해야 함을 상기하세요.",
+    "e": "생애주기 복지는 청소년기 진로부터 청년기 고용, 중년기 일·가정 양립, 노년기 소득·돌봄 보장에 이르기까지 연속적이고 통합적으로 제공되어야 합니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "2030 청년 여성들이 일상에서 겪는 젠더 기반 안전 위협 중 온라인과 결합된 신종 범죄 형태는? [교재 p.60, 워크북 p.43]",
+    "o": [
+      "딥페이크 딥합성 성범죄 및 불법촬영물 유포, 온라인 스토킹",
+      "봉건시대 소작농 수탈",
+      "신문 종이 지면 명예훼손",
+      "오프라인 우편물 도난"
+    ],
+    "a": 0,
+    "h": "디지털 기술 발달과 함께 청년 여성의 인격권을 침해하는 신종 디지털 성범죄입니다.",
+    "e": "청년 여성은 기술 환경 변화 속에서 딥페이크, 불법촬영, 디지털 스토킹 등 신종 디지털 성범죄 위협에 노출되어 있어 이에 대한 법적 안전망이 시급합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "중년 여성이 자기개발과 노동시장 재진입을 위해 요구하는 복지 서비스 욕구는? [교재 p.62, 워크북 p.44]",
+    "o": [
+      "사회적 재교육, 평생학습 프로그램, 맞춤형 직업 훈련 및 정서적 자아찾기 지원",
+      "전업주부 의무 등록제",
+      "모든 사회 활동의 법적 금지",
+      "사적 가사노동의 100% 강제 일임"
+    ],
+    "a": 0,
+    "h": "자녀 독립 후 주체적 삶을 개척하기 위한 평생교육과 맞춤 재취업 훈련의 필요성입니다.",
+    "e": "중년 여성은 돌봄 의무가 감소하는 시기에 맞춰 자신의 자아실현과 경제적 자립을 도모할 수 있는 사회적 재교육 및 취업 훈련 기회를 강력히 욕구합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "한국 노인 수급자 중 여성 노인이 절대다수를 차지하는 공적 구제 제도는? [교재 p.65, 워크북 p.46]",
+    "o": [
+      "국민기초생활보장제도 (생계급여 수급자 중 여성 노인 비율이 높음)",
+      "산업재해보상보험 (남성 산재 노동자 위주)",
+      "고용보험 실업급여 (정규직 남성 위주)",
+      "군인연금"
+    ],
+    "a": 0,
+    "h": "독자적 연금이 없어 최후의 공공부조 생계급여 수급자로 몰리는 여성 노인의 현실입니다.",
+    "e": "여성 노인은 국민연금 수급권이 미흡하여 극빈층으로 전락할 확률이 높으며, 이로 인해 국민기초생활보장 생계급여 수급자 중 여성 노인 비율이 높게 나타납니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "노인장기요양보험제도가 급여를 제공하는 2대 대표적 방식(유형)은? [교재 p.69, 워크북 p.48]",
+    "o": [
+      "재가급여 (방문요양, 방문목욕 등) & 시설급여 (요양원 입소 지원)",
+      "사적 연금 급여 & 주식 투자 급여",
+      "해외 여행 급여 & 자용차 수리 급여",
+      "학원 수강 급여 & 영화 관람 급여"
+    ],
+    "a": 0,
+    "h": "집에서 받는 방문요양(재가)과 시설에 입소하여 받는 요양원 급여(시설)를 떠올리세요.",
+    "e": "노인장기요양보험은 자택에서 서비스를 받는 재가급여와 요양시설에 입소하여 케어를 받는 시설급여를 중심으로 운영됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "생애주기별 젠더 불평등을 해결하기 위한 '보편적 생애복지국가'의 기본 이념은? [교재 p.72, 워크북 p.50]",
+    "o": [
+      "모든 시민이 생애 전 과정에서 성별을 이유로 차별받지 않고 권리로서 돌봄과 소득을 보장받는 포용 사회",
+      "남성 근로자만을 위한 100% 전용 복지국가",
+      "모든 복지 제도를 철폐하고 개인 사적 자선에 의존하는 사회",
+      "여성을 시설에 분리 수용하는 제국주의 사회"
+    ],
+    "a": 0,
+    "h": "성별에 구애받지 않고 아동기부터 노년기까지 인간다운 권리를 누리는 성평등 복지국가입니다.",
+    "e": "보편적 생애복지국가는 생애 전반의 젠더 위험을 사회적으로 분담하여, 여성과 남성 모두가 존엄한 시민으로 살아갈 수 있게 보장합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "제4장 '생애주기별 젠더 이슈' 단원의 전체 핵심 메시지를 종합 요약한 결론으로 가장 적절한 것은? [교재 p.54-78, 워크북 p.40-54]",
+    "o": [
+      "여성의 생애주기별 젠더 불평등은 청소년기 교육부터 청년기 노동차별, 중년기 다중 돌봄, 노년기 소득 빈곤으로 누적·확대되므로, 전체 생애과정을 아우르는 성인지적·통합적 복지 체계를 구축해야 한다.",
+      "여성의 생애주기별 문제는 모두 개별적이므로 아무런 연관성이 없다는 것이 최종 결론이다.",
+      "여성 노인의 빈곤은 오직 개인의 사치 때문이므로 국가가 개입할 이유가 전혀 없다.",
+      "한국 청년 여권은 세계 최고이므로 채용 차별이나 주거 안전 대책은 전면 폐지해야 한다."
+    ],
+    "a": 0,
+    "h": "생애사적 불평등 누적 메커니즘을 파악하고 생애 전반을 아우르는 성인지적 복지 체계 구축의 필요성을 다룬 결론입니다.",
+    "e": "4장은 여성 생애주기(청소년-청년-중년-노년)에 따른 젠더 이슈를 다루며, 누적되는 성불평등 고리를 끊기 위해 생애 전반을 아우르는 예방적·성인지적 사회보장망 구축의 중요성을 강조합니다."     
+        }
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var allQuestions = [];   // 검사를 통과한 전체 문제
+    var questions = [];      // 지금 풀고 있는 문제 묶음(전체 또는 틀린 문제)
+    var curIdx = 0;
+    var wrongCount = 0;      // 현재 문제에서 틀린 횟수
+    var correctFirst = 0;    // 이번 회차에서 한 번에 맞힌 문제 수
+    var missed = [];         // 이번 회차에서 한 번이라도 틀린 문제
+
+    document.title = '여성복지론 퀴즈 [제' + LECTURE.no + '장]';
+    document.getElementById('lecture-title').textContent = '제' + LECTURE.no + '장: ' + LECTURE.title;
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateQuizData(data) {
+        var errors = [];
+        var warnings = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'quizData가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, warnings: warnings, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = 'Q' + (i + 1);
+            var problems = [];
+
+            if (!item || typeof item !== 'object') {
+                problems.push('문제가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) {
+                    problems.push('q(질문)가 없거나 비어 있습니다.');
+                }
+
+                var oOk = Array.isArray(item.o);
+                if (!oOk) {
+                    problems.push('o(보기)가 배열([ ])이 아닙니다.');
+                } else {
+                    if (item.o.length < 2) {
+                        problems.push('보기가 ' + item.o.length + '개뿐입니다. 2개 이상 필요합니다.');
+                    }
+                    var bad = item.o.some(function (x) { return typeof x !== 'string' || !x.trim(); });
+                    if (bad) {
+                        problems.push('보기 중에 비어 있거나 글자가 아닌 항목이 있습니다.');
+                    } else {
+                        var uniq = {};
+                        item.o.forEach(function (x) { uniq[x.trim()] = true; });
+                        if (Object.keys(uniq).length !== item.o.length) {
+                            problems.push('똑같은 보기가 2개 이상 있습니다.');
+                        }
+                    }
+                }
+
+                if (typeof item.a === 'string') {
+                    problems.push('a(정답 번호)가 따옴표로 감싸져 있습니다("' + item.a + '"). 따옴표 없는 숫자로 바꾸세요.');
+                } else if (!Number.isInteger(item.a)) {
+                    problems.push('a(정답 번호)가 없거나 숫자가 아닙니다.');
+                } else if (oOk && (item.a < 0 || item.a >= item.o.length)) {
+                    if (item.a === item.o.length) {
+                        problems.push('a가 ' + item.a + '입니다. 번호는 0부터 세므로 보기가 ' + item.o.length + '개면 0~' + (item.o.length - 1) + ' 중 하나여야 합니다. 1부터 센 것 같아요(' + item.a + ' → ' + (item.a - 1) + ').');
+                    } else {
+                        problems.push('a가 ' + item.a + '로 보기 범위(0~' + (item.o.length - 1) + ')를 벗어났습니다.');
+                    }
+                }
+
+                if (typeof item.h !== 'string' || !item.h.trim()) {
+                    problems.push('h(힌트)가 없거나 비어 있습니다.');
+                }
+                if (typeof item.e !== 'string' || !item.e.trim()) {
+                    problems.push('e(해설)가 없거나 비어 있습니다.');
+                }
+            }
+
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        
+
+        return { errors: errors, warnings: warnings, valid: valid };
+    }
+
+    /* ---------- 검사 결과 화면 ---------- */
+    function showProblemScreen(opts) {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            if (it.warn) li.className = 'warn';
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startQuiz(list) {
+        allQuestions = list;
+        document.getElementById('problem-screen').style.display = 'none';
+        beginRound(list);
+    }
+
+    // 한 회차 시작: 전체 문제 또는 틀린 문제만 받아서 처음부터 진행
+    function beginRound(list) {
+        questions = list;
+        curIdx = 0;
+        correctFirst = 0;
+        missed = [];
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof quizData === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'quizData를 찾을 수 없습니다. const quizData = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 퀴즈 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '문제와 문제 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateQuizData(quizData);
+
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            startQuiz(result.valid);
+            return;
+        }
+
+        var items = result.errors.map(function (er) { return { tag: er.tag, text: er.text }; })
+            .concat(result.warnings.map(function (w) { return { tag: w.tag, text: w.text, warn: true }; }));
+
+        var badCount = (Array.isArray(quizData) ? quizData.length : 0) - result.valid.length;
+        var hasErrors = result.errors.length > 0;
+
+        showProblemScreen({
+            title: hasErrors ? '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요' : '확인해 볼 곳이 있어요',
+            summary: !hasErrors
+                ? '오류는 아니지만 한 번 확인해 보세요.'
+                : (badCount > 0
+                    ? '전체 ' + quizData.length + '문제 중 ' + badCount + '문제에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                    : '퀴즈 데이터를 확인하고 새로고침하세요.'),
+            items: items,
+            tips: hasErrors ? [
+                '정답 번호 a는 따옴표 없는 숫자이고, 첫 번째 보기가 0입니다',
+                '문제마다 type, q, o, a, h, e 가 모두 있어야 합니다'
+            ] : null,
+            buttonText: result.valid.length > 0
+                ? (hasErrors ? '오류 없는 ' + result.valid.length + '문제만 먼저 풀기' : '그대로 시작하기')
+                : null,
+            onButton: function () { startQuiz(result.valid); }
+        });
+    }
+
+    /* ---------- 퀴즈 진행 ---------- */
+    function loadQuestion() {
+        wrongCount = 0;
+        var q = questions[curIdx];
+
+        document.getElementById('progress-text').textContent = (curIdx + 1) + ' / ' + questions.length;
+        updateScore();
+        window.scrollTo(0, 0);
+        document.getElementById('question-type').textContent = q.type || '일반문제';
+        document.getElementById('question-text').textContent = 'Q' + (allQuestions.indexOf(q) + 1) + '. ' + q.q;
+
+        var container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.o.forEach(function (opt, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = function () { checkAnswer(idx, btn); };
+            container.appendChild(btn);
+        });
+
+        document.getElementById('hint-box').style.display = 'none';
+        document.getElementById('exp-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(idx, btn) {
+        var q = questions[curIdx];
+        var allBtns = document.querySelectorAll('.option-btn');
+
+        if (idx === q.a) {
+            btn.classList.add('correct');
+            allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+            if (wrongCount === 0) { correctFirst++; updateScore(); }
+            showExplanation();
+        } else {
+            wrongCount++;
+            if (wrongCount === 1) missed.push(q);
+            btn.classList.add('wrong');
+            btn.style.pointerEvents = 'none';
+
+            if (wrongCount === 1) {
+                document.getElementById('hint-text').textContent = q.h;
+                document.getElementById('hint-box').style.display = 'block';
+            } else {
+                allBtns[q.a].classList.add('correct');
+                allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+                showExplanation();
+            }
+        }
+    }
+
+    function showExplanation() {
+        var q = questions[curIdx];
+        document.getElementById('exp-text').textContent = q.e;
+        document.getElementById('exp-box').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // 풀던 중에 누르면 한 번 물어봅니다. (묻지 않으려면 if 문 세 줄을 지우세요)
+    function goList() {
+        if (curIdx > 0 && !confirm('퀴즈를 그만하고 목록으로 갈까요?\n지금까지 푼 기록은 저장되지 않아요.')) return;
+        location.href = 'index.html';
+    }
+
+    function nextQuestion() {
+        curIdx++;
+        if (curIdx < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    /* ---------- 점수와 다시 풀기 ---------- */
+    // 한 번에 맞힌 문제만 점수로 셉니다. (힌트를 본 뒤 맞히면 점수에 넣지 않아요)
+    function updateScore() {
+        document.getElementById('score-text').textContent = '한 번에 맞힌 문제 ' + correctFirst + '개';
+    }
+
+    function showResult() {
+        var total = questions.length;
+        var score = Math.round(correctFirst / total * 100);
+        var isRetry = total < allQuestions.length;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-title').textContent = isRetry ? '🔁 틀린 문제 복습을 마쳤습니다!' : '🎊 학습을 마쳤습니다!';
+        document.getElementById('result-score').textContent = score + '점';
+        document.getElementById('result-detail').textContent =
+            (isRetry ? '복습한 ' : '전체 ') + total + '문제 중 한 번에 맞힌 문제 ' + correctFirst + '개 (100점 만점)';
+
+        var msg;
+        if (score >= 90) msg = '진짜 수고 많이 하셨습니다, 학우님! A+ 당근 🥕';
+        else if (score >= 70) msg = '잘하고 계세요! 틀린 문제만 한 번 더 풀면 더 단단해져요.';
+        else msg = '괜찮아요. 틀린 문제를 해설과 함께 다시 풀어 보면 금방 늘어요.';
+        document.getElementById('result-msg').textContent = msg;
+
+        var details = document.getElementById('missed-details');
+        var list = document.getElementById('missed-list');
+        list.innerHTML = '';
+        missed.forEach(function (m) {
+            var li = document.createElement('li');
+            li.value = allQuestions.indexOf(m) + 1;
+            li.textContent = m.q;
+            list.appendChild(li);
+        });
+        details.open = false;
+        details.style.display = missed.length ? 'block' : 'none';
+        document.getElementById('missed-summary').textContent = '이번에 틀린 문제 ' + missed.length + '개 보기';
+
+        var retryBtn = document.getElementById('retry-missed-btn');
+        retryBtn.textContent = '❌ 틀린 문제만 다시 풀기 (' + missed.length + '문제)';
+        retryBtn.style.display = missed.length ? 'block' : 'none';
+
+        window.scrollTo(0, 0);
+    }
+
+    function retryAll() { beginRound(allQuestions); }
+    function retryMissed() { if (missed.length) beginRound(missed.slice()); }
+
+    init();
+</script>
+</body>
+</html>

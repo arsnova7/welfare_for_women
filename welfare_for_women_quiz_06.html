@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 퀴즈</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #b45309;
+        --bg-gray: #f4f6f8;
+        --success: #28a745;
+        --danger: #dc3545;
+    }
+    body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-gray); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 700px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 1.8rem; color: #14213d; font-weight: 800; margin-bottom: 10px; word-break: keep-all; }
+    .header p { color: #55657d; font-weight: bold; font-size: 1.1rem; margin: 0; }
+    .header .score-text { margin-top: 6px; color: #166534; font-size: 1rem; }
+
+    .quiz-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .q-type { display: inline-block; background: #e0e7f1; color: #14213d; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 15px; font-weight: 700; }
+    #question-text { font-weight: bold; font-size: 1.2rem; margin-bottom: 25px; word-break: keep-all; line-height: 1.4; color: #14213d; }
+
+    .option-btn { width: 100%; text-align: left; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; transition: 0.2s; line-height: 1.4; color: #2f3640; font-weight: 500; font-family: inherit; }
+    .option-btn:hover { background: #fff7ed; border-color: var(--primary); }
+    .option-btn:focus-visible, .btn-next:focus-visible, .result-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+    .option-btn.correct { background: #e6fffa; border-color: var(--success); color: var(--success); font-weight: bold; }
+    .option-btn.wrong { background: #fff5f5; border-color: var(--danger); color: var(--danger); opacity: 0.6; }
+
+    .btn-next { width: 100%; padding: 16px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; margin-top: 25px; display: none; font-size: 1.1rem; transition: 0.2s; font-family: inherit; }
+    .btn-next:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .hint-box, .exp-box { padding: 18px; border-radius: 10px; margin-top: 15px; display: none; line-height: 1.6; word-break: keep-all; font-size: 0.95rem; }
+    .hint-box { background: #fffbeb; border: 1px solid #fbd38d; color: #b45309; }
+    .exp-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+
+    .result-card { background: white; border-radius: 20px; padding: 40px; text-align: center; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .result-btn { width: 100%; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; font-weight: bold; transition: 0.2s; font-family: inherit; }
+    .result-btn:hover { background: #f3f6fa; }
+    .result-score { margin: 6px 0 4px; font-size: 3.4rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+    .result-detail { margin: 0 0 10px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    #result-msg { margin: 0 0 18px; line-height: 1.6; word-break: keep-all; color: #14213d; font-weight: 600; }
+    .missed { text-align: left; margin: 0 0 18px; padding: 10px 16px; border: 1px solid #e0e7f1; border-radius: 10px; }
+    .missed summary { cursor: pointer; font-weight: 700; color: #14213d; padding: 4px 0; }
+    .missed ol { margin: 10px 0 4px; padding-left: 26px; font-size: 0.95rem; line-height: 1.55; word-break: keep-all; color: #2f3640; }
+    .missed li { margin-bottom: 8px; }
+
+    /* 문제 화면 아래의 목록으로 돌아가기 버튼 */
+    .list-btn { width: 100%; padding: 14px; margin-top: 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: white; color: #14213d; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .list-btn:hover { background: #f3f6fa; }
+    .list-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid var(--danger); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; color: #14213d; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: var(--danger); }
+    .problem-list .warn .tag { color: var(--primary); }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="header">
+            <h1 id="lecture-title"></h1>
+            <p id="progress-text"></p>
+            <p id="score-text" class="score-text"></p>
+        </div>
+        <div class="quiz-box">
+            <div id="question-type" class="q-type">개념확인</div>
+            <div id="question-text"></div>
+            <div id="options-container"></div>
+
+            <div id="hint-box" class="hint-box">💡 <b>힌트:</b> <span id="hint-text"></span></div>
+            <div id="exp-box" class="exp-box">✅ <b>정답 및 해설:</b> <span id="exp-text"></span></div>
+
+            <button id="next-btn" class="btn-next" type="button" onclick="nextQuestion()">다음 문제로</button>
+        </div>
+
+        <button class="list-btn" type="button" onclick="goList()">🏠 목록으로 돌아가기</button>
+    </div>
+
+    <div id="result-screen" class="result-card">
+        <h2 id="result-title">🎊 학습을 마쳤습니다!</h2>
+        <p id="result-score" class="result-score"></p>
+        <p id="result-detail" class="result-detail"></p>
+        <p id="result-msg"></p>
+        <details id="missed-details" class="missed">
+            <summary id="missed-summary"></summary>
+            <ol id="missed-list"></ol>
+        </details>
+        <button id="retry-missed-btn" class="result-btn" type="button" style="background:var(--primary); color:white; border:none;" onclick="retryMissed()"></button>
+        <button class="result-btn" type="button" onclick="retryAll()">🔄 처음부터 다시 풀기</button>
+        <button class="result-btn" type="button" onclick="location.href='index.html'">🏠 목록으로 돌아가기</button>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 6, title: "노동시장의 변화와 여성 노동" };
+</script>
+
+<!-- ③ 퀴즈 데이터: 노트북LM이 만든 const quizData = [...]; 를 통째로 덮어쓰세요.
+     아래 1문항은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     문제마다 type, q, o, a, h, e 가 모두 있어야 하고, a는 첫 번째 보기가 0입니다. -->
+<script>
+    const quizData = [
+        {
+            "type": "개념확인",
+    "q": "한국의 연령대별 남녀 경제활동 참가율에서 나타나는 'M커브 현상'에 대한 설명으로 가장 적절한 것은? [워크북 p.75, 2025 기말]",
+    "o": [
+      "남성의 경제활동참가율이 청년기를 지나면서 급격히 떨어지는 모습이다.",
+      "여성의 경제활동참가율이 30~40대에 크게 하락한 뒤 다시 상승하며 M자 형태를 이루는 현상이다.",
+      "여성의 고용률이 고령층에서 가장 낮게 나타나는 현상이다.",
+      "남녀의 경제활동패턴이 생애 전반에서 모두 비슷하게 나타나는 현상이다."
+    ],
+    "a": 1,
+    "h": "여성이 30대 전후 임신·출산·육아로 노동시장을 이탈했다가 재진입하는 곡선의 모형입니다.",
+    "e": "M커브 현상은 여성의 경제활동참가율이 20대 후반에 정점을 찍은 후 30대 후반~40대에 임신·출산·육아 부담으로 급감했다가 자녀 양육 후 재취업하면서 다시 상승하는 알파벳 M 자 모양의 곡선 형태입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "플랫폼 경제 확산과 젠더 불평등에 관한 설명으로 가장 적절한 것은? [워크북 p.75, 2025 기말]",
+    "o": [
+      "디지털 기술이 돌봄 영역(아동·노인·장애인)에 미치는 영향은 긍정적인 것과 부정적인 것이 공존한다.",
+      "긱(Gig) 노동 확대는 여성에게 안정적이고 예측 가능한 일자리를 제공한다.",
+      "플랫폼 노동에 대한 사회보험 적용이 점점 강화되어 사각지대가 전면 소멸했다.",
+      "플랫폼 노동에서는 전통적 성별분업의 영향이 전혀 나타나지 않는다."
+    ],
+    "a": 0,
+    "h": "디지털 기술이 돌봄 부담을 줄이는 긍정성과 돌봄 기계화 및 국가 책임 축소라는 부정성이 공존함을 떠올리세요.",
+    "e": "디지털 전환과 플랫폼 경제의 돌봄 기술은 원격 돌봄 및 모니터링으로 부담을 줄여주는 긍정적 측면과 함께 정서노동의 가시성 약화 및 개인 전가라는 부정적 측면이 동시에 존재합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "디지털 전환 시대의 성인지적 노동정책 방향으로 적절하지 않은 것은? [워크북 p.75, 2025 기말]",
+    "o": [
+      "기존 노동시장에서 나타나는 젠더 격차를 해소하기 위한 노력이 필요하다.",
+      "변화하는 노동환경에서 여성의 지위 향상을 위한 제도적 지원이 요구된다.",
+      "여성의 디지털 기술 역량 강화를 위한 교육 확대가 필요하다.",
+      "디지털 기술이 자연스럽게 성평등을 보장하므로 별도의 성인지 정책은 불필요하다."
+    ],
+    "a": 3,
+    "h": "기술 변화 자체가 성중립적이지 않으며, 성인지적 관점 없이는 불평등이 재현될 위험을 고려하세요.",
+    "e": "디지털 기술 도입이 저절로 성평등을 가져오지 않으며, 방치할 경우 알고리즘 편향이나 STEM 배제 등 젠더 불평등이 심화되므로 적극적인 성인지적 디지털 노동정책이 필수적입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "디지털 전환이 여성 노동시장에 미친 영향에 대한 설명으로 옳지 않은 것은? [워크북 p.76]",
+    "o": [
+      "사무직·단순 서비스직 등 여성의 종사 비율이 높은 직무에서 자동화 위험이 높다.",
+      "데이터 기반 의사결정 과정에서 알고리즘에 의한 성차별이 발생할 수 있다.",
+      "디지털 기술 확산은 모든 여성 노동자의 고용 안정성을 향상시킨다.",
+      "STEM 분야에서는 여전히 여성의 진입 장벽이 존재한다."
+    ],
+    "a": 2,
+    "h": "디지털 전환이 유연성을 주지만 사회보험 사각지대와 고용 불안정성도 가져옴을 확인하세요.",
+    "e": "디지털 전환과 플랫폼 긱 노동은 일자리의 유연성을 주기도 하지만, 사회보험 사각지대와 비정규직화를 수반하므로 모든 여성의 고용 안정성을 올려준다는 설명은 옳지 않습니다."
+  },
+  {
+    "type": "비교·분석",
+    "q": "기술에 따른 '임금 프리미엄(Wage Premium)'과 성별 격차에 대한 설명으로 옳은 것은? [워크북 p.76-77]",
+    "o": [
+      "기술 변화에 따른 직무 전환 과정에서 남성과 여성의 임금 프리미엄은 거의 동일하다.",
+      "남성 노동자는 여성 노동자보다 전반적으로 낮은 임금 프리미엄을 경험한다.",
+      "직무 복잡도가 높을수록 여성의 임금 인상률이 남성보다 크게 나타난다.",
+      "대부분의 직무 전환 단계에서 남성이 여성보다 더 높은 임금 프리미엄을 받는 경향이 있다."
+    ],
+    "a": 3,
+    "h": "WEF(2025) 조사 결과 직무 전환 시 남성의 임금 프리미엄(44%)이 여성(30%)보다 높은 현상을 보세요.",
+    "e": "기술 진보에 따른 임금 프리미엄 경험률은 남성이 평균 44%, 여성이 30%로 나타나 거의 모든 직무 전환 단계에서 남성이 여성보다 높은 보상을 받는 성별 격차가 관찰됩니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "대한민국 「헌법」 제32조 및 「근로기준법」 제6조에서 규정하고 있는 근로의 권리와 성차별 금지에 대한 설명으로 옳지 않은 것은? [교재 p.86, 워크북 p.68]",
+    "o": [
+      "헌법 제32조는 모든 국민이 근로의 권리를 가진다고 명시하고 있다.",
+      "근로기준법 제6조는 사용자가 근로자에 대해 성별을 이유로 차별적 대우를 하지 못하도록 규정한다.",
+      "남녀고용평등법은 모집, 채용, 승진, 임금, 해고 등 고용 전 과정에서의 성차별을 금지한다.",
+      "법적 보정이 완성되어 현실 노동시장의 성별 불평등과 구조적 장벽은 완전히 소멸하였다."
+    ],
+    "a": 3,
+    "h": "법적 보장에도 불구하고 유리천장, M자 곡선, 임금격차 등 구조적 장벽이 잔존하는 현실을 생각하세요.",
+    "e": "헌법과 근로기준법, 남녀고용평등법에 성차별 금지가 법제화되어 있으나, 현실에서는 유리천장, 임금격차 등 다양한 구조적 불평등이 여전히 존재합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "겉으로는 기회가 평등해 보이지만 실제로는 여성들이 고위직이나 리더십으로 승진하는 것을 막는 보이지 않는 장벽을 뜻하는 용어는? [교재 p.86, 워크북 p.68]",
+    "o": [
+      "유리천장(Glass Ceiling)",
+      "유리절벽(Glass Cliff)",
+      "유리 에스컬레이터(Glass Escalator)",
+      "마미트랙(Mommy Track)"
+    ],
+    "a": 0,
+    "h": "대기업 여성 임원 6~10%, 여성 국회의원 20% 미만 등 고위직 진입 차단 장벽입니다.",
+    "e": "'유리천장'은 조직 내에서 능력을 갖춘 여성이 고위직으로 올라가는 것을 막는 눈에 보이지 않는 구조적 장벽을 뜻합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성이 리더 자리에 오를 때 부실 기업이나 실패 위험이 극도로 높은 불안정한 직위에 주로 배치되는 현상을 가리키는 용어는? [교재 p.86, 워크북 p.68]",
+    "o": [
+      "유리절벽(Glass Cliff)",
+      "유리천장(Glass Ceiling)",
+      "유리 에스컬레이터(Glass Escalator)",
+      "핑크 콜라(Pink Collar)"
+    ],
+    "a": 0,
+    "h": "망하기 직전의 조직 리더나 당선 가능성이 희박한 선거구에 출마시키는 불안정한 승진 현상입니다.",
+    "e": "'유리절벽'은 여성 리더가 실패할 확률이 매우 높은 위기 상황이나 불안정한 환경의 직위에 임명되어 쉽게 낭떠러지로 떨어지는 위험에 노출되는 현상을 의미합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "초등교사나 간호사 등 여성이 다수를 차지하는 직종에 소수 남성이 진입했을 때 오히려 남성이 빠른 속도로 승진하는 현상은? [교재 p.86, 워크북 p.68]",
+    "o": [
+      "유리 에스컬레이터(Glass Escalator)",
+      "유리천장(Glass Ceiling)",
+      "유리절벽(Glass Cliff)",
+      "M자형 커브(M-Curve)"
+    ],
+    "a": 0,
+    "h": "여성 다수 직종에 진입한 남성 노동자가 무형의 가속 장치를 탄 듯 고속 승진하는 현상입니다.",
+    "e": "'유리 에스컬레이터'는 여성 다수 종사 직종에 진입한 남성이 성별 프리미엄 덕분에 여성보다 빠르게 관리직으로 승진하는 현상입니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2000년부터 2024년까지 한국의 남녀 고용률 추이(국가데이터처, 2025) 분석으로 옳지 않은 것은? [교재 p.86-87, 워크북 p.68]",
+    "o": [
+      "전체 고용률은 60% 안팎에서 완만한 상승세를 보여 2024년 약 62%에 도달했다.",
+      "남성 고용률은 70% 초반대에서 꾸준히 높게 유지되었다.",
+      "여성 고용률은 2000년 47.0%에서 2024년 54.7%로 상승하였다.",
+      "남녀 고용률 격차는 2000년 24%p에서 2024년 0%p로 완전 소멸하였다."
+    ],
+    "a": 3,
+    "h": "2024년 남녀 고용률 격차가 24%p에서 16%p로 완화되었으나 여전히 성별 격차가 유지됨을 확인하세요.",
+    "e": "남녀 고용률 격차는 2000년 24%p에서 2024년 16%p(남성 70.9% vs 여성 54.7%)로 축소되었으나 완전히 사라진 것은 아닙니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "OECD(2025) 데이터 기준 주요국 여성 고용률(15~64세)의 국제 비교 분석으로 옳은 것은? [교재 p.87, 워크북 p.69]",
+    "o": [
+      "스웨덴과 독일은 70%를 상회하는 높은 여성 고용률을 유지하고 있다.",
+      "한국의 15~64세 여성 고용률은 2024년 기준 10% 미만으로 전 세계 최하위다.",
+      "이탈리아는 여성 고용률이 90%로 OECD 1위이다.",
+      "미국, 영국, 스웨덴 등 모든 OECD 국가의 여성 고용률 수치가 완전 동일하다."
+    ],
+    "a": 0,
+    "h": "북유럽 및 독일의 70% 이상 높은 여성 고용률과 한국(62.1%)의 상승 추세를 비교하세요.",
+    "e": "스웨덴과 독일은 여성 고용률이 70%를 상회하는 대표적 상위국이며, 한국은 2000년 50.1%에서 2024년 62.1%로 상승하여 OECD 평균에 근접하고 있습니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2020년 이후 한국 여성의 경제활동 참가율 그래프 형태에 나타난 최근의 구조적 변화는? [교재 p.87-88, 워크북 p.69]",
+    "o": [
+      "전형적인 M자형 파임 현상이 점차 완화되어 남성과 유사한 완만한 곡선/직선 형태로 변화하고 있다.",
+      "30대 여성의 경제활동 참여율이 0%로 폭락하여 완전한 U자형으로 탈바꿈했다.",
+      "20대부터 60대까지 경제활동 참가율이 100% 수평선이 되었다.",
+      "M자형 파임 현상이 과거보다 10배 이상 깊어졌다."
+    ],
+    "a": 0,
+    "h": "30~40대 여성의 경력유지 확대로 M자 파임이 점차 메워지며 완만해지는 변화를 파악하세요.",
+    "e": "과거에는 30대 여성의 경력단절로 심한 M자형 곡선을 보였으나, 최근 30~40대 여성의 참가율 확대로 남성과 유사한 완만한 형태(M자 완화)로 변화하고 있습니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2024년 기준 비경제활동 인구의 '일하지 않는 이유'에 대한 남녀 성별 사유 1위로 바르게 짝지어진 것은? [교재 p.88-89, 워크북 p.69]",
+    "o": [
+      "여성: 가사 (57.4%) / 남성: 기타 (38.5%) 및 통학 (28.2%)",
+      "여성: 육아 (90.0%) / 남성: 가사 (90.0%)",
+      "여성: 통학 (50.0%) / 남성: 육아 (50.0%)",
+      "여성: 연로 (80.0%) / 남성: 신체장애 (80.0%)"
+    ],
+    "a": 0,
+    "h": "여성의 가사 전담 비중(57.4%)과 남성의 통학 및 기타 사유 중심 분포를 비교하세요.",
+    "e": "여성의 주요 비경제활동 사유는 '가사(57.4%)'가 압도적 1위인 반면, 남성은 '기타(38.5%)'와 '통학(28.2%)'이 높으며 육아(0%)와 가사(3.5%) 비중은 극히 미미합니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2000년부터 2024년까지 여성 비경제활동 사유 중 '가사'와 '육아' 응답 비율의 변화 추이는? [교재 p.88-89, 워크북 p.69]",
+    "o": [
+      "가사는 48.3%에서 57.4%로 증가하고, 육아는 18.5%에서 7.2%로 감소하였다.",
+      "가사와 육아 모두 0%로 소멸하였다.",
+      "육아는 80%로 폭증하고 가사는 1%로 감소했다.",
+      "가사와 육아 비율이 24년간 단 1%도 변하지 않았다."
+    ],
+    "a": 0,
+    "h": "저출생으로 인한 육아 사유 감소(7.2%)와 돌봄·가사 부담 전담 유지(57.4%)를 보세요.",
+    "e": "저출생의 영향을 반영하여 '육아' 사유는 18.5%에서 7.2%로 감소한 반면, 돌봄과 가사는 '가사' 항목에 포함되어 48.3%에서 57.4%로 오히려 비중이 늘었습니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "남성 비경제활동 인구 중 '육아(0.1~0.2%)'와 '가사(3.5%)' 응답 비율이 지속적으로 미미한 수준에 머무는 현실이 시사하는 바는? [교재 p.89, 워크북 p.69]",
+    "o": [
+      "가정과 일상생활에서의 성별 역할 분업이 여전히 공고하게 작동하고 있다.",
+      "남성들이 가사와 육아를 100% 전담하고 있음을 증명한다.",
+      "한국 사회에서 가사와 육아 노동이 완전히 소멸되었음을 나타낸다.",
+      "모든 남성이 주당 100시간 이상 무상 육아휴직을 쓰고 있음을 뜻한다."
+    ],
+    "a": 0,
+    "h": "비경제활동 상태에 놓인 남성조차 가사와 육아를 주 사유로 삼지 않는 성별분업 고착을 생각하세요.",
+    "e": "남성 비경제활동 사유 중 육아(0.1~0.2%)와 가사(3.5%) 비중이 매우 낮다는 것은 여전히 가정 내 돌봄 및 가사 노동이 여성에게 집중되는 전통적 성별분업 구조를 보여줍니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "1963년부터 2024년까지 여성 취업자의 종사상 지이 변화 추이 중 가장 뚜렷한 특징 2가지는? [교재 p.89-90, 워크북 p.69]",
+    "o": [
+      "무급가족종사자 비율의 급감(56.0% → 5.9%)과 상용근로자 비율의 급증(20.0% → 55.1%)",
+      "자영업자의 90% 독점 및 임시직 전원 해고",
+      "상용직의 0% 하락 및 일용직의 80% 폭증",
+      "무급가족종사자가 90%로 증가하여 최고치 기록"
+    ],
+    "a": 0,
+    "h": "무급 가족 노동자에서 공식 임금 노동자인 상용직 근로자로의 지위 전환을 확인하세요.",
+    "e": "과거 여성 취업자의 절반 이상(56.0%)이었던 무급가족종사자는 5.9%로 크게 줄어든 반면, 정규직 형태인 상용근로자 비중은 20.0%에서 55.1%로 대폭 증가했습니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2024년 기준 취업자의 종사상 지위 비교 시 남성에 비해 여성이 여전히 높게 나타나는 불안정 고용 형태는? [교재 p.90, 워크북 p.69]",
+    "o": [
+      "임시근로자 비중",
+      "고용원이 있는 자영업자 비중",
+      "상용근로자 비중",
+      "임의계속가입자 비중"
+    ],
+    "a": 0,
+    "h": "상용직 증가에도 불구하고 여성에게 상대적으로 높게 유지되는 임시직 비중입니다.",
+    "e": "여성 상용직이 크게 늘었으나, 여전히 남성에 비해 계약 기간이 짧은 '임시근로자' 비중이 상대적으로 높게 나타나 고용의 질적 차이가 존재합니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2024년 취업자의 성별 직업 유형 1위 분포로 바르게 짝지어진 것은? [교재 p.90-91, 워크북 p.69-70]",
+    "o": [
+      "남성 1위: 기능·기계조작·단순노무 (41.6%) / 여성 1위: 서비스·판매 종사자 (29.4%)",
+      "남성 1위: 서비스·판매 / 여성 1위: 건설업",
+      "남성 1위: 농림어업 / 여성 1위: 광공업",
+      "남성 1위: 임원 비서 / 여성 1위: 소형 트럭 운전"
+    ],
+    "a": 0,
+    "h": "남성의 생산·단순노무 집중(41.6%)과 여세의 서비스·판매 집중(29.4%) 성별 직종 분리를 확인하세요.",
+    "e": "남성 취업자는 기능·기계조작·단순노무직(41.6%) 비중이 가장 높고, 여성 취업자는 서비스·판매직(29.4%) 및 사무직(20.9%) 비중이 높아 직업 유형의 성별 분리가 뚜렷합니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2024년 취업자의 성별 산업 유형 조사 결과 여성 취업자의 절반 이상(51.7%)이 집중되어 있는 산업군은? [교재 p.91, 워크북 p.70]",
+    "o": [
+      "사업·개인·공공서비스 및 기타",
+      "건설업",
+      "광공업",
+      "전기·운수·통신업"
+    ],
+    "a": 0,
+    "h": "교육, 보건, 사회복지, 개인서비스 등 공공·개인 서비스 산업군을 고르세요.",
+    "e": "여성 취업자의 51.7%는 사업·개인·공공서비스 및 기타 부문(교육, 보건복지, 개인서비스 등)에 집중되어 있어 산업 구조상 성별 분업 특성이 강합니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "2006년부터 2024년까지 한국 노동시장의 성별 월임금총액 및 임금 격차 추이로 올바른 설명은? [교재 p.91-92, 워크북 p.70]",
+    "o": [
+      "남녀 모두 임금이 상승하였으나, 남성(4,398천 원)이 여성(2,851천 원)보다 높아 격차가 1,038천 원에서 1,547천 원으로 확대되었다.",
+      "여성 임금이 남성 임금의 3배를 초과하였다.",
+      "성별 임금 격차가 2024년 현재 0원으로 완전 소멸하였다.",
+      "남성 임금은 100만 원으로 감소하고 여성 임금만 500만 원으로 급증했다."
+    ],
+    "a": 0,
+    "h": "여성 임금 상승에도 불구하고 absolute 격차 금액(154.7만 원)이 커지는 현상을 확인하세요.",
+    "e": "2006년 대비 2024년 남녀 임금이 모두 올랐으나, 남성 월임금 439.8만 원, 여성 285.1만 원으로 성별 월임금 절대 격차는 103.8만 원에서 154.7만 원으로 오히려 벌어졌습니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "2025년 8월 인천에서 APEC 회원국들이 만장일치로 공동 성명을 채택하며 첫 개최한 장관급 회의의 주 의제는? [교재 p.92]",
+    "o": [
+      "APEC 여성 경제 회의 (디지털 전환과 돌봄 경제에서의 성별 임금격차 해소)",
+      "APEC 농업 기술 발전 회의",
+      "APEC 수소 에너지 군사 협약",
+      "APEC 가상화폐 규제 청문회"
+    ],
+    "a": 0,
+    "h": "성별 임금 격차 1위 한국에서 개최되어 디지털 전환과 돌봄 경제 해법을 모색한 회의입니다.",
+    "e": "2025년 8월 인천에서 열린 APEC 여성 경제 회의에서는 디지털 전환과 돌봄 경제 과제를 논의하고 성별 임금격차 해소를 위한 공동 해법을 모색하였습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "단순한 전자화(Digitization)나 업무 일부분의 자동화(Automation)를 넘어, 조직·사회 전반의 구조와 운영 방식을 인공지능과 대량 데이터를 기반으로 혁신 재편하는 과정을 뜻하는 용어는? [교재 p.92-93, 워크북 p.70]",
+    "o": [
+      "디지털 전환(Digital Transformation)",
+      "아날로그 복원",
+      "탈상품화 체제",
+      "정상가족 재편"
+    ],
+    "a": 0,
+    "h": "AI, 빅데이터, 클라우드를 활용해 비즈니스와 사회 전체 운영을 재구성하는 변화입니다.",
+    "e": "'디지털 전환'은 단순 문서를 전산화하는 차원을 넘어서 AI, 빅데이터 등을 활용해 사회·조직의 운영 방식과 문화를 근본적으로 재구조화하는 변화입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "디지털 전환이 여성의 노동 참여 및 일·돌봄 병행에 제공하는 긍정적 기회 요인은? [교재 p.93, 워크북 p.71]",
+    "o": [
+      "시간과 공간의 제약이 줄어들어 재택·원격근무 등 유연한 일자리를 통해 일과 돌봄을 병행할 수 있다.",
+      "모든 여성에게 무조건 공무원 정규직 직급이 배정된다.",
+      "가사 노동이 자동으로 100% 사회화되어 집안일이 사라진다.",
+      "여성의 STEM 직군 진입이 법적으로 강제 의무화된다."
+    ],
+    "a": 0,
+    "h": "시공간 제약 완화를 통한 재택·시간제 등 유연근로 확산의 장점입니다.",
+    "e": "디지털 전환은 유연한 근로 형태(재택·원격근무 등)를 가능하게 하여 여성들이 자녀나 가족을 돌보면서도 일자리를 유지할 수 있는 긍정적 기회를 제공합니다."
+  },
+  {
+    "type": "인과관계",
+    "q": "디지털 전환으로 인한 유연근무 확산이 돌봄의 사회적 분담 없이 이루어질 때 여성에게 발생하는 부작용 위험은? [교재 p.93, 워크북 p.71]",
+    "o": [
+      "\"집에 있으니 아이를 돌볼 수 있다\"는 시선 속에 돌봄과 업무의 경계가 모호해져 이중 부담이 가중된다.",
+      "여성의 임금이 즉시 남성의 10배로 상승한다.",
+      "남성의 가사 노동 참여율이 100%로 자동 증가한다.",
+      "모든 여성 노동자가 기업 임원으로 자동 승진한다."
+    ],
+    "a": 0,
+    "h": "돌봄 책임의 공적 분담 없는 재택근무가 가져오는 '업무+돌봄 가중' 위험입니다.",
+    "e": "돌봄의 사회적 분담 없이 유연근무만 확대될 경우, 집에 거주한다는 이유로 여성에게 돌봄 책임을 전가하여 돌봄과 노동의 경계가 무너지고 이중 부담이 심화될 위험이 있습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "인공지능 및 자동화 기술의 확산이 여성 노동자에게 가져오는 직무 소멸의 위험성은? [교재 p.94, 워크북 p.71]",
+    "o": [
+      "여성 종사 비중이 높은 단순 사무직, 전화상담, 백오피스 업무가 빠르게 자동화되어 실직 위험에 노출된다.",
+      "여성들이 독점하던 중장비 운전직 일자리가 전면 소멸한다.",
+      "모든 사무직 여성이 인공지능 연구소장으로 자동 승진한다.",
+      "자동화 기술은 오직 남성 노동자의 일자리만 소멸시킨다."
+    ],
+    "a": 0,
+    "h": "단순 사무, 고객상담 등 여성 집중 직무의 AI 자동화 대체를 생각하세요.",
+    "e": "자동화 및 AI 기술 대체 위험이 높은 단순 사무, 행정 보조, 고객 상담 등 백오피스 직무에 여성 종사자가 많아 디지털 전환 과정에서 여성의 실직 위험이 상대적으로 높습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "채용 및 평가 과정에서 편향된 데이터 습득으로 인해 인공지능이 특정 성별에게 불리한 판단을 내리는 현상을 가리키는 용어는? [교재 p.94, 워크북 p.71]",
+    "o": [
+      "알고리즘 성차별 (Algorithm Bias)",
+      "디지털 탈상품화",
+      "유리 에스컬레이터",
+      "성주류화 평가"
+    ],
+    "a": 0,
+    "h": "AI 학습 데이터에 축적된 과거의 성차별 패턴이 알고리즘 평가로 재현되는 현상입니다.",
+    "e": "과거의 차별적 데이터가 AI 알고리즘에 학습될 경우, 채용 서류 평가나 인사고과에서 여성에게 불리한 판단을 내리는 '알고리즘 성차별'이 발생합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "미래 고소득·전문직 산업의 핵심이자 기술 중심 직군으로, 여전히 여성의 진입 장벽이 높은 STEM의 4개 학문 분야는? [교재 p.94, 워크북 p.71]",
+    "o": [
+      "Science(과학), Technology(기술), Engineering(공학), Mathematics(수학)",
+      "Sociology(사회학), Trade(무역), Education(교육), Medicine(의학)",
+      "Software(소프트웨어), Telecommunication(통신), Environment(환경), Management(경영)",
+      "Service(서비스), Tourism(관광), Economy(경제), Music(음악)"
+    ],
+    "a": 0,
+    "h": "S(과학), T(기술), E(공학), M(수학)의 약어 조합입니다.",
+    "e": "STEM 분야는 Science(과학), Technology(기술), Engineering(공학), Mathematics(수학)의 약자로, 미래 핵심 산업이지만 여성 진입 장벽이 여전히 존재하는 분야입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "돌봄, 청소, 배달, 콘텐츠 제작 등 여성 참여율이 높은 직종을 중심으로 확산되고 있는 '임시 계약/플랫폼 기반 노동'을 뜻하는 용어는? [교재 p.94, 워크북 p.71]",
+    "o": [
+      "긱(Gig) 노동",
+      "상용 직장 노동",
+      "조합주의 노동",
+      "연로 노동"
+    ],
+    "a": 0,
+    "h": "독립적 계약자나 플랫폼 앱을 통해 단기·초단기로 일을 수주받는 고용 형태입니다.",
+    "e": "플랫폼 경제에서 호출이나 앱을 통해 필요할 때마다 단기로 일하는 형태를 '긱(Gig) 노동'이라 하며, 유연하지만 고용 불안정과 사회보험 사각지대를 수반합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "디지털 기술(원격 모니터링, AI 돌봄 로봇 등)이 돌봄 노동에 도입될 때 발생하는 부정적 우려는? [교재 p.95, 워크북 p.71]",
+    "o": [
+      "돌봄의 기계화로 정서 노동의 가시성이 저하되고, 돌봄 책임이 국가에서 개인으로 전가될 수 있다.",
+      "돌봄 비용이 100% 무상으로 처리된다.",
+      "모든 돌봄 노동자의 임금이 대기업 임원 수준으로 오른다.",
+      "가정 내 무급 돌봄 노동이 완벽하게 소멸한다."
+    ],
+    "a": 0,
+    "h": "기계화에 따른 따뜻한 정서적 유대의 가치 하락과 공적 돌봄 책임의 후퇴 위험을 생각하세요.",
+    "e": "돌봄이 기술에 의해 기계화되면 돌봄 노동자들의 정서 노동 가치가 제대로 인정받지 못하고, 기술 도입을 핑계로 국가의 공적 돌봄 책임이 축소될 우려가 있습니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "세계경제포럼 『미래 직업 보고서(WEF, 2025)』가 전망한 2025~2030년 세계 고용 변화 수치로 옳은 것은? [교재 p.95, 워크북 p.71]",
+    "o": [
+      "총 일자리의 22%가 재편되며, 14%(1억 7천만 개) 창출 및 8%(9,200만 개) 소멸로 순증 7%(7,800만 개)를 기록한다.",
+      "전 세계 모든 일자리의 100%가 사라진다.",
+      "신규 일자리는 0개이고 소멸만 5억 개에 달한다.",
+      "일자리 재편 비율은 0.1%로 정체된다."
+    ],
+    "a": 0,
+    "h": "일자리 22% 재편속 신규 14% 생기고 8% 사라져 총 7% 순증한다는 WEF 예측 수치입니다.",
+    "e": "WEF(2025)에 따르면 2030년까지 전체 일자리의 22%가 재편되는 과정에서 1억 7천만 개가 창출되고 9,200만 개가 감소하여 약 7,800만 개의 순증을 나타낼 것으로 예측됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "WEF(2025) 보고서에서 2025~2030년 향후 5년간 가장 급속도로 성장할 직업 2대 분야는? [교재 p.95-96, 워크북 p.71-72]",
+    "o": [
+      "기술 관련 직무(빅데이터, AI·머신러닝, 핀테크) 및 그린·에너지 전환 직무(전기차, 재생에너지)",
+      "우편 서비스 사무원 및 임원 비서",
+      "은행 창구 출납원 및 데이터 입력 사무원",
+      "방문 판매원 및 신문 노점 판매원"
+    ],
+    "a": 0,
+    "h": "빅데이터/AI 등 기술 직무와 전기차/환경 등 그린 에너지 직무의 높은 성장을 떠올리세요.",
+    "e": "미래 가장 급성장할 직직무는 빅데이터·AI·소프트웨어 개발 등 기술 직무와 전기차·재생에너지 등 그린 전환 관련 직무입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "WEF(2025) 보고서에서 2025~2030년 사이 절대 수치 기준으로 가장 크게 감소할 것으로 예측된 직무는? [교재 p.96, 워크북 p.72]",
+    "o": [
+      "사무 및 비서직 (우편원, 은행 창구원, 데이터 입력원, 임원 비서 등)",
+      "빅데이터 전문가",
+      "재생에너지 엔지니어",
+      "AI 및 머신러닝 전문가"
+    ],
+    "a": 0,
+    "h": "단순 반복 행정 사무 및 창구 비서 업무의 20~40% 대폭 감소 예상을 확인하세요.",
+    "e": "자동화와 AI 대처로 인해 우편원, 은행 창구원, 데이터 입력원, 행정 보조원 등 단순 사무 및 비서직이 가장 크게 감소할 것으로 전망됩니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "WEF(2025)의 '인간-기계 업무 전환 비중' 전망(2025년 대비 2030년)으로 올바른 설명은? [교재 p.96-97, 워크북 p.72]",
+    "o": [
+      "인간 수행 업무는 47%에서 33%로 감소하고, 디지털 기술 수행은 22%에서 34%로 급증하며, 결합형은 33%를 기록한다.",
+      "인간 수행 업무 비중이 100%로 늘어난다.",
+      "기술 수행 업무 비중이 0%로 소멸한다.",
+      "인간과 기술의 역할 변화가 완전히 정체된다."
+    ],
+    "a": 0,
+    "h": "인간 단순 노동의 감소(47%->33%)와 기술(34%) 및 인간+기술 결합형(33%) 증가를 보세요.",
+    "e": "2030년까지 순수 인간 수행 업무 비중은 47%에서 33%로 줄어드는 반면, 기계·AI 전담 비중은 34%로 늘어나고 인간과 기술이 협업하는 '결합형(Combination)' 비중이 33%로 확대됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "디지털 기술, 인공지능, 빅데이터 등 첨단 기술 역량을 잘 다루는 사람일수록 노동시장에서 훨씬 더 높은 임금을 받게 되는 현상을 가리키는 용어는? [교재 p.97, 워크북 p.72]",
+    "o": [
+      "기술에 따른 임금 프리미엄(Wage Premium)",
+      "유리 에스컬레이터",
+      "M자형 커브",
+      "탈가족화 임금"
+    ],
+    "a": 0,
+    "h": "디지털 파워 기술 보유자에게 부과되는 임금 인상 혜택 지표입니다.",
+    "e": "'기술에 따른 임금 프리미엄'은 디지털 전환기에 AI, 빅데이터, STEM 관련 기술을 다루는 근로자가 얻게 되는 상대적으로 높은 임금 인상 및 보상 혜택을 뜻합니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "WEF(2025) 조사 결과, 직무 전환 시 '임금 프리미엄 경험률'의 성별 수치는? [교재 p.97, 워크북 p.72]",
+    "o": [
+      "남성 평균 44% / 여성 평균 30%",
+      "남성 평균 10% / 여성 평균 90%",
+      "남성 평균 0% / 여성 평균 0%",
+      "남녀 모두 동일하게 50%"
+    ],
+    "a": 0,
+    "h": "남성이 여성보다 임금 상승 경험률이 14%p 높은 성별 격차 수치입니다.",
+    "e": "직무 전환 시 임금 프리미엄을 경험한 비율은 남성 평균 44%, 여성 평균 30%로 기술 전환의 과실이 남성 노동자에게 더 높게 배분되는 구조를 드러냅니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "직무 전환 단계 중 '준비가 거의 필요 없는 직무'에서 '약간의 준비가 필요한 직무'로 전환 시 남녀 임금 프리미엄 비율은? [교재 p.97-98, 워크북 p.72]",
+    "o": [
+      "남성 노동자 39% / 여성 노동자 19%",
+      "남성 노동자 10% / 여성 노동자 80%",
+      "남성 노동자 0% / 여성 노동자 0%",
+      "남녀 노동자 모두 50%"
+    ],
+    "a": 0,
+    "h": "초기 직무 이동 단계에서 남성이 받는 39%와 여성이 받는 19%의 2배 차이를 보세요.",
+    "e": "초급 직무 전환 단계에서도 남성 노동자는 39%의 임금 프리미엄을 받는 반면, 여성 노동자는 겨우 19%에 불과하여 초기 단계부터 격차가 나타납니다."
+  },
+  {
+    "type": "표·그래프 해석",
+    "q": "가장 고난도인 '상당한 준비가 필요한 직무'에서 '많은 준비가 필요한 전문직무'로 전환 시 성별 임금 인상률 격차는? [교재 p.98, 워크북 p.72]",
+    "o": [
+      "남성 44% 인상 / 여성 15% 인상",
+      "남성 15% 인상 / 여성 80% 인상",
+      "남성 0% / 여성 100%",
+      "남녀 모두 동일하게 30% 인상"
+    ],
+    "a": 0,
+    "h": "고위 전문직 이동 구간에서 남성(44%)과 여성(15%) 간에 발생하는 3배 수준의 극심한 차이입니다.",
+    "e": "직무 복잡도가 가장 높은 전문직 전환 구간에서 남성은 44%의 중간값 임금 인상을 경험하는 반면, 여성은 단 15%에 그쳐 임금 프리미엄의 성별 격차가 가장 극명하게 벌어집니다."
+  },
+  {
+    "type": "인과관계",
+    "q": "고난도 기술 전문직 직무 전환 시 남성이 여성보다 월등히 높은 임금 프리미엄을 받게 되는 구조적 원인은? [교재 p.97-98, 워크북 p.72]",
+    "o": [
+      "남성의 타고난 능력이 뛰어나서가 아니라, 고난도 기술 역량을 쌓을 수 있는 기회, 구조, 평가 체계가 남성 중심으로 설계되어 있기 때문",
+      "여성 노동자들이 기술 공부를 전면 거부하기 때문",
+      "정부가 여성 노동자에게만 기술 세금을 90% 부과하기 때문",
+      "모든 기업이 여성에게 무조건 최저임금 이하만 주도록 법제화되어 있기 때문"
+    ],
+    "a": 0,
+    "h": "개인 역량 차이가 아니라 기술 기회와 평가 체계의 남성 중심 구조화에서 기인함을 파악하세요.",
+    "e": "남성이 전문직 전환에 유리한 것은 개인 능력 때문이 아니라 기술 역량을 쌓고 경험할 기회와 승진 평가 체계가 남성 기득권 중심으로 구조화되어 있기 때문입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "디지털 플랫폼(유튜브, 커머스, SNS 등) 환경이 여성 노동자에게 제공하는 대안적 기회 요소는? [교재 p.98, 워크북 p.73]",
+    "o": [
+      "오프라인 중심의 성차별과 고정관념을 넘어, 실력과 성과 중심 평가 속에 1인 기업 및 여성 창업 기회가 확대된다.",
+      "오프라인보다 더 강력한 법적 25세 정년제가 강제 적용된다.",
+      "모든 여성 유튜버에게 국가가 매월 1억 원의 구독료를 보장한다.",
+      "오프라인의 유리천장이 온라인에서는 10배 더 견고해진다."
+    ],
+    "a": 0,
+    "h": "오프라인 성차별 장벽을 우회하여 성과 중심으로 진출하는 1인 여성 창업 및 크리에이터의 긍정면입니다.",
+    "e": "디지털 플랫폼 공간은 기존 오프라인 조직의 가부장적 성차별을 탈피하여, 여성 창업자나 1인 크리에이터가 실력과 성과를 바탕으로 활발히 활동할 수 있는 대안적 기회를 제공합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "디지털 전환기에 IT 기술 및 디지털 리터러시가 부족한 취약계층 여성(고령·저학력·저소득)이 마주할 위험은? [교재 p.98, 워크북 p.73]",
+    "o": [
+      "디지털 기술 소외 계층으로 전락하여 노동시장에서 완전히 배제될 위험",
+      "자동으로 공공기관 고위 임원으로 발탁될 기회",
+      "아날로그 노동으로만 억대 연봉을 보장받을 기회",
+      "디지털 전환의 혜택을 남성보다 10배 더 누릴 기회"
+    ],
+    "a": 0,
+    "h": "기술 격차(Digital Divide)가 노동시장 이중화와 소외로 이어지는 위험입니다.",
+    "e": "디지털 역량이 부족한 저학력·고령·저소득 취약계층 여성들은 정보 격차로 인해 디지털 노동시장에서 이중으로 배제될 위험이 큽니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "디지털 사회에서 여성 노동자의 기회를 확대하고 성평등을 구현하기 위해 시급히 강화해야 할 2가지 교육 및 정책 과제는? [교재 p.99, 워크북 p.73]",
+    "o": [
+      "성인지적 디지털 정책 도입 및 여성의 '디지털 리터러시(Literacy)'와 'STEM 교육' 강화",
+      "여성의 인터넷 사용 전면 금지 및 3세대 대가족 복원",
+      "남성 전용 기술 아카데미 신설 및 여성의 사무직 고착화",
+      "디지털 기술 개발 전면 중단 및 농경사회 복귀"
+    ],
+    "a": 0,
+    "h": "디지털 활용 능력(리터러시)과 기술·공학(STEM) 역량을 갖추도록 돕는 핵심 과제입니다.",
+    "e": "디지털 전환기에 여성의 노동권을 보장하려면 성인지적 디지털 정책을 수립하고, 여성의 디지털 리터러시(매체 활용 능력)와 STEM(과학·기술·공학·수학) 교육을 대폭 강화해야 합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "전통적 노동시장의 젠더 불평등 과제 중 여성 노동자가 장기간 마주해 온 4대 구조적 장벽에 해당하지 않는 것은? [교재 p.99, 워크북 p.73]",
+    "o": [
+      "M자형 경력단절",
+      "유리천장 및 성별 직종 분리",
+      "남녀 임금 격차",
+      "법적 25세 정년제의 전국적 의무 시행"
+    ],
+    "a": 3,
+    "h": "과거 1980년대 25세 조기정년제는 판례를 통해 불법 차별로 인정되어 폐지되었습니다.",
+    "e": "전통적 젠더 불평등 장벽은 경력단절, 유리천장, 성별 직종 분리, 임금 격차이며, 25세 정년제 의무 시행은 과거의 판례로 파기된 불법 차별입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "교재에서 제기하는 \"일자리 수의 단순 증가가 여성 노동 문제의 근본적 해결책이 될 수 없는 이유\"는? [교재 p.99, 워크북 p.73]",
+    "o": [
+      "불안정한 저임금 일자리만 늘어나는 것은 의미가 없으며, 일의 질과 돌봄 가치의 보장이 수반되어야 하기 때문",
+      "여성들은 일을 많이 하면 건강이 자동으로 파괴되기 때문",
+      "일자리가 늘어나면 여성의 정년이 20세로 낮아지기 때문",
+      "여성 노동자는 공적 소득보다 사적 이전에만 만족하기 때문"
+    ],
+    "a": 0,
+    "h": "단순 양적 취업자 수 증대를 넘어, 양질의 정규직 노동과 돌봄 가치 인정이라는 질적 전환이 필요함을 파악하세요.",
+    "e": "양적으로 일자리 수만 늘어나는 긱 노동·단시간 비정규직 확산은 여성 노동의 불안정성을 심화시키므로, 일의 질(Quality of Work)과 돌봄 가치 보장이 수반되어야 합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "미래 여성 노동의 방향과 관련하여 돌봄, 협력, 공감 중심의 노동 가치를 재정립해야 하는 당위성은? [교재 p.99, 워크북 p.73]",
+    "o": [
+      "과거 저평가되었던 돌봄과 필수 노동의 사회적 가치를 가시화하고 성평등한 시간 권리를 보장하기 위해",
+      "남성을 노동시장에서 전면 쫓아내기 위해",
+      "모든 돌봄 노동을 로봇에게 전담시키고 인간의 노동을 폐지하기 위해",
+      "AI 기술에 맞춰 여성의 임금을 최저 수준으로 고정하기 위해"
+    ],
+    "a": 0,
+    "h": "그동안 무급이나 저임금으로 비하되었던 돌봄·생산 노동의 가치를 제대로 평가하는 패러다임 전환입니다.",
+    "e": "미래 여성 노동은 시장의 상품화 중심 논리를 벗어나, 과거 저평가받던 돌봄·협력·정서 노동의 가치를 제대로 평가하고 성평등한 돌봄 사회를 구축하는 방향으로 나아가야 합니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "「근로기준법」 제6조(균등한 처우)의 핵심 조항 내용으로 옳은 것은? [교재 p.86, 워크북 p.68]",
+    "o": [
+      "사용자는 근로자에 대하여 남녀의 성(性)을 이유로 차별적 대우를 하지 못한다.",
+      "여성 근로자는 결혼과 동시에 자진 퇴직해야 한다.",
+      "남성 근로자에게만 상용직 우선 채용권을 부여한다.",
+      "사용자는 여성 노동자에게 성별에 따라 50% 감액된 임금을 지급한다."
+    ],
+    "a": 0,
+    "h": "남녀 성별을 이유로 한 사업주의 차별 대우를 일절 금지하는 근로기준법 제6조 조항입니다.",
+    "e": "근로기준법 제6조는 균등 처우 규정으로서 사용자가 남녀의 성을 이유로 근로자에게 차별적 대우를 하지 못하도록 명시하고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 취업자의 산업 유형 중 남성이 광공업·건설업에 집중되고, 여성이 공공서비스·보건복지업(51.7%)에 집중되는 현상을 설명하는 용어는? [교재 p.91, 워크북 p.70]",
+    "o": [
+      "산업 구조상의 성별 직종/분업적 분리",
+      "알고리즘 무차별성",
+      "자발적 이별 폭력",
+      "시민권의 탈가족화"
+    ],
+    "a": 0,
+    "h": "성별에 따라 취업하는 산업군과 직종이 분리·고착화되어 있는 노동시장 구조입니다.",
+    "e": "남성은 건설·광공업, 여성은 보건복지·공공서비스 부문에 과반수 집중되는 것은 산업 구조 측면에서의 '성별 분업적 분리' 특성을 보여줍니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "남녀 경제활동 참가율 그래프에서 2010년 이전의 M자형 곡선과 2024년의 완만한 곡선 변화가 뜻하는 사회적 의미는? [교재 p.88, 워크북 p.69]",
+    "o": [
+      "여성들의 30대 경력단절이 점차 줄어들고 생애 전반에 걸친 노동 참여의 지속성이 높아지고 있다.",
+      "한국의 모든 30대 여성이 경제활동을 전면 포기하였다.",
+      "여성의 고용률이 남성보다 3배 이상 높아졌다.",
+      "20대 여성들의 노동 참여가 전면 금지되었다."
+    ],
+    "a": 0,
+    "h": "30대 여성의 출산·육아기 일자리 유지 및 재취업 증가로 M자 파임이 줄어드는 의미입니다.",
+    "e": "M자형 곡선이 완만해진 것은 30대 여성들의 경제활동 참가가 늘어나고 경력유지율이 높아지면서 생애주기 동안 노동 지속성이 개선되고 있음을 의미합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "제6장 '노동시장의 변화와 여성 노동' 단원의 전체 핵심 메시지를 종합한 결론으로 가장 적절한 것은? [교재 p.85-99, 워크북 p.68-77]",
+    "o": [
+      "전통적 노동시장의 성별 불평등(유리천장, 임금격차 등)을 해소함과 동시에, 디지털 전환기 성인지적 정책과 STEM·리터러시 교육을 통해 여성 노동의 실질적 평등을 보장해야 한다.",
+      "디지털 전환이 이루어지면 별도의 정책 없이도 성평등이 100% 자동 달성된다.",
+      "여성의 고용률은 OECD 최고 수준이므로 노동시장에서의 여성 복지 개입이 불필요하다.",
+      "사무직 자동화로 인해 여성은 노동시장에서 퇴출되고 전업주부로 돌아가는 것이 바람직하다."
+    ],
+    "a": 0,
+    "h": "전통 노동 불평등 해소 + 디지털 전환기 성인지 정책 및 역량 강화를 통한 실질적 평등 달성을 종합하세요.",
+    "e": "6장은 경력단절, 유리천장, 임금격차 등 기존 불평등의 해소와 함께, AI·디지털 전환 시대의 성인지적 정책, STEM 교육, 플랫폼 노동 보호를 통한 여성 노동권 확립을 강조합니다."
+        }
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var allQuestions = [];   // 검사를 통과한 전체 문제
+    var questions = [];      // 지금 풀고 있는 문제 묶음(전체 또는 틀린 문제)
+    var curIdx = 0;
+    var wrongCount = 0;      // 현재 문제에서 틀린 횟수
+    var correctFirst = 0;    // 이번 회차에서 한 번에 맞힌 문제 수
+    var missed = [];         // 이번 회차에서 한 번이라도 틀린 문제
+
+    document.title = '여성복지론 퀴즈 [제' + LECTURE.no + '장]';
+    document.getElementById('lecture-title').textContent = '제' + LECTURE.no + '장: ' + LECTURE.title;
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateQuizData(data) {
+        var errors = [];
+        var warnings = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'quizData가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, warnings: warnings, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = 'Q' + (i + 1);
+            var problems = [];
+
+            if (!item || typeof item !== 'object') {
+                problems.push('문제가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) {
+                    problems.push('q(질문)가 없거나 비어 있습니다.');
+                }
+
+                var oOk = Array.isArray(item.o);
+                if (!oOk) {
+                    problems.push('o(보기)가 배열([ ])이 아닙니다.');
+                } else {
+                    if (item.o.length < 2) {
+                        problems.push('보기가 ' + item.o.length + '개뿐입니다. 2개 이상 필요합니다.');
+                    }
+                    var bad = item.o.some(function (x) { return typeof x !== 'string' || !x.trim(); });
+                    if (bad) {
+                        problems.push('보기 중에 비어 있거나 글자가 아닌 항목이 있습니다.');
+                    } else {
+                        var uniq = {};
+                        item.o.forEach(function (x) { uniq[x.trim()] = true; });
+                        if (Object.keys(uniq).length !== item.o.length) {
+                            problems.push('똑같은 보기가 2개 이상 있습니다.');
+                        }
+                    }
+                }
+
+                if (typeof item.a === 'string') {
+                    problems.push('a(정답 번호)가 따옴표로 감싸져 있습니다("' + item.a + '"). 따옴표 없는 숫자로 바꾸세요.');
+                } else if (!Number.isInteger(item.a)) {
+                    problems.push('a(정답 번호)가 없거나 숫자가 아닙니다.');
+                } else if (oOk && (item.a < 0 || item.a >= item.o.length)) {
+                    if (item.a === item.o.length) {
+                        problems.push('a가 ' + item.a + '입니다. 번호는 0부터 세므로 보기가 ' + item.o.length + '개면 0~' + (item.o.length - 1) + ' 중 하나여야 합니다. 1부터 센 것 같아요(' + item.a + ' → ' + (item.a - 1) + ').');
+                    } else {
+                        problems.push('a가 ' + item.a + '로 보기 범위(0~' + (item.o.length - 1) + ')를 벗어났습니다.');
+                    }
+                }
+
+                if (typeof item.h !== 'string' || !item.h.trim()) {
+                    problems.push('h(힌트)가 없거나 비어 있습니다.');
+                }
+                if (typeof item.e !== 'string' || !item.e.trim()) {
+                    problems.push('e(해설)가 없거나 비어 있습니다.');
+                }
+            }
+
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        
+
+        return { errors: errors, warnings: warnings, valid: valid };
+    }
+
+    /* ---------- 검사 결과 화면 ---------- */
+    function showProblemScreen(opts) {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            if (it.warn) li.className = 'warn';
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startQuiz(list) {
+        allQuestions = list;
+        document.getElementById('problem-screen').style.display = 'none';
+        beginRound(list);
+    }
+
+    // 한 회차 시작: 전체 문제 또는 틀린 문제만 받아서 처음부터 진행
+    function beginRound(list) {
+        questions = list;
+        curIdx = 0;
+        correctFirst = 0;
+        missed = [];
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof quizData === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'quizData를 찾을 수 없습니다. const quizData = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 퀴즈 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '문제와 문제 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateQuizData(quizData);
+
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            startQuiz(result.valid);
+            return;
+        }
+
+        var items = result.errors.map(function (er) { return { tag: er.tag, text: er.text }; })
+            .concat(result.warnings.map(function (w) { return { tag: w.tag, text: w.text, warn: true }; }));
+
+        var badCount = (Array.isArray(quizData) ? quizData.length : 0) - result.valid.length;
+        var hasErrors = result.errors.length > 0;
+
+        showProblemScreen({
+            title: hasErrors ? '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요' : '확인해 볼 곳이 있어요',
+            summary: !hasErrors
+                ? '오류는 아니지만 한 번 확인해 보세요.'
+                : (badCount > 0
+                    ? '전체 ' + quizData.length + '문제 중 ' + badCount + '문제에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                    : '퀴즈 데이터를 확인하고 새로고침하세요.'),
+            items: items,
+            tips: hasErrors ? [
+                '정답 번호 a는 따옴표 없는 숫자이고, 첫 번째 보기가 0입니다',
+                '문제마다 type, q, o, a, h, e 가 모두 있어야 합니다'
+            ] : null,
+            buttonText: result.valid.length > 0
+                ? (hasErrors ? '오류 없는 ' + result.valid.length + '문제만 먼저 풀기' : '그대로 시작하기')
+                : null,
+            onButton: function () { startQuiz(result.valid); }
+        });
+    }
+
+    /* ---------- 퀴즈 진행 ---------- */
+    function loadQuestion() {
+        wrongCount = 0;
+        var q = questions[curIdx];
+
+        document.getElementById('progress-text').textContent = (curIdx + 1) + ' / ' + questions.length;
+        updateScore();
+        window.scrollTo(0, 0);
+        document.getElementById('question-type').textContent = q.type || '일반문제';
+        document.getElementById('question-text').textContent = 'Q' + (allQuestions.indexOf(q) + 1) + '. ' + q.q;
+
+        var container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.o.forEach(function (opt, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = function () { checkAnswer(idx, btn); };
+            container.appendChild(btn);
+        });
+
+        document.getElementById('hint-box').style.display = 'none';
+        document.getElementById('exp-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(idx, btn) {
+        var q = questions[curIdx];
+        var allBtns = document.querySelectorAll('.option-btn');
+
+        if (idx === q.a) {
+            btn.classList.add('correct');
+            allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+            if (wrongCount === 0) { correctFirst++; updateScore(); }
+            showExplanation();
+        } else {
+            wrongCount++;
+            if (wrongCount === 1) missed.push(q);
+            btn.classList.add('wrong');
+            btn.style.pointerEvents = 'none';
+
+            if (wrongCount === 1) {
+                document.getElementById('hint-text').textContent = q.h;
+                document.getElementById('hint-box').style.display = 'block';
+            } else {
+                allBtns[q.a].classList.add('correct');
+                allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+                showExplanation();
+            }
+        }
+    }
+
+    function showExplanation() {
+        var q = questions[curIdx];
+        document.getElementById('exp-text').textContent = q.e;
+        document.getElementById('exp-box').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // 풀던 중에 누르면 한 번 물어봅니다. (묻지 않으려면 if 문 세 줄을 지우세요)
+    function goList() {
+        if (curIdx > 0 && !confirm('퀴즈를 그만하고 목록으로 갈까요?\n지금까지 푼 기록은 저장되지 않아요.')) return;
+        location.href = 'index.html';
+    }
+
+    function nextQuestion() {
+        curIdx++;
+        if (curIdx < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    /* ---------- 점수와 다시 풀기 ---------- */
+    // 한 번에 맞힌 문제만 점수로 셉니다. (힌트를 본 뒤 맞히면 점수에 넣지 않아요)
+    function updateScore() {
+        document.getElementById('score-text').textContent = '한 번에 맞힌 문제 ' + correctFirst + '개';
+    }
+
+    function showResult() {
+        var total = questions.length;
+        var score = Math.round(correctFirst / total * 100);
+        var isRetry = total < allQuestions.length;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-title').textContent = isRetry ? '🔁 틀린 문제 복습을 마쳤습니다!' : '🎊 학습을 마쳤습니다!';
+        document.getElementById('result-score').textContent = score + '점';
+        document.getElementById('result-detail').textContent =
+            (isRetry ? '복습한 ' : '전체 ') + total + '문제 중 한 번에 맞힌 문제 ' + correctFirst + '개 (100점 만점)';
+
+        var msg;
+        if (score >= 90) msg = '진짜 수고 많이 하셨습니다, 학우님! A+ 당근 🥕';
+        else if (score >= 70) msg = '잘하고 계세요! 틀린 문제만 한 번 더 풀면 더 단단해져요.';
+        else msg = '괜찮아요. 틀린 문제를 해설과 함께 다시 풀어 보면 금방 늘어요.';
+        document.getElementById('result-msg').textContent = msg;
+
+        var details = document.getElementById('missed-details');
+        var list = document.getElementById('missed-list');
+        list.innerHTML = '';
+        missed.forEach(function (m) {
+            var li = document.createElement('li');
+            li.value = allQuestions.indexOf(m) + 1;
+            li.textContent = m.q;
+            list.appendChild(li);
+        });
+        details.open = false;
+        details.style.display = missed.length ? 'block' : 'none';
+        document.getElementById('missed-summary').textContent = '이번에 틀린 문제 ' + missed.length + '개 보기';
+
+        var retryBtn = document.getElementById('retry-missed-btn');
+        retryBtn.textContent = '❌ 틀린 문제만 다시 풀기 (' + missed.length + '문제)';
+        retryBtn.style.display = missed.length ? 'block' : 'none';
+
+        window.scrollTo(0, 0);
+    }
+
+    function retryAll() { beginRound(allQuestions); }
+    function retryMissed() { if (missed.length) beginRound(missed.slice()); }
+
+    init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 퀴즈</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #b45309;
+        --bg-gray: #f4f6f8;
+        --success: #28a745;
+        --danger: #dc3545;
+    }
+    body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-gray); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 700px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 1.8rem; color: #14213d; font-weight: 800; margin-bottom: 10px; word-break: keep-all; }
+    .header p { color: #55657d; font-weight: bold; font-size: 1.1rem; margin: 0; }
+    .header .score-text { margin-top: 6px; color: #166534; font-size: 1rem; }
+
+    .quiz-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .q-type { display: inline-block; background: #e0e7f1; color: #14213d; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 15px; font-weight: 700; }
+    #question-text { font-weight: bold; font-size: 1.2rem; margin-bottom: 25px; word-break: keep-all; line-height: 1.4; color: #14213d; }
+
+    .option-btn { width: 100%; text-align: left; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; transition: 0.2s; line-height: 1.4; color: #2f3640; font-weight: 500; font-family: inherit; }
+    .option-btn:hover { background: #fff7ed; border-color: var(--primary); }
+    .option-btn:focus-visible, .btn-next:focus-visible, .result-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+    .option-btn.correct { background: #e6fffa; border-color: var(--success); color: var(--success); font-weight: bold; }
+    .option-btn.wrong { background: #fff5f5; border-color: var(--danger); color: var(--danger); opacity: 0.6; }
+
+    .btn-next { width: 100%; padding: 16px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; margin-top: 25px; display: none; font-size: 1.1rem; transition: 0.2s; font-family: inherit; }
+    .btn-next:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .hint-box, .exp-box { padding: 18px; border-radius: 10px; margin-top: 15px; display: none; line-height: 1.6; word-break: keep-all; font-size: 0.95rem; }
+    .hint-box { background: #fffbeb; border: 1px solid #fbd38d; color: #b45309; }
+    .exp-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+
+    .result-card { background: white; border-radius: 20px; padding: 40px; text-align: center; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .result-btn { width: 100%; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; font-weight: bold; transition: 0.2s; font-family: inherit; }
+    .result-btn:hover { background: #f3f6fa; }
+    .result-score { margin: 6px 0 4px; font-size: 3.4rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+    .result-detail { margin: 0 0 10px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    #result-msg { margin: 0 0 18px; line-height: 1.6; word-break: keep-all; color: #14213d; font-weight: 600; }
+    .missed { text-align: left; margin: 0 0 18px; padding: 10px 16px; border: 1px solid #e0e7f1; border-radius: 10px; }
+    .missed summary { cursor: pointer; font-weight: 700; color: #14213d; padding: 4px 0; }
+    .missed ol { margin: 10px 0 4px; padding-left: 26px; font-size: 0.95rem; line-height: 1.55; word-break: keep-all; color: #2f3640; }
+    .missed li { margin-bottom: 8px; }
+
+    /* 문제 화면 아래의 목록으로 돌아가기 버튼 */
+    .list-btn { width: 100%; padding: 14px; margin-top: 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: white; color: #14213d; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .list-btn:hover { background: #f3f6fa; }
+    .list-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid var(--danger); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; color: #14213d; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: var(--danger); }
+    .problem-list .warn .tag { color: var(--primary); }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="header">
+            <h1 id="lecture-title"></h1>
+            <p id="progress-text"></p>
+            <p id="score-text" class="score-text"></p>
+        </div>
+        <div class="quiz-box">
+            <div id="question-type" class="q-type">개념확인</div>
+            <div id="question-text"></div>
+            <div id="options-container"></div>
+
+            <div id="hint-box" class="hint-box">💡 <b>힌트:</b> <span id="hint-text"></span></div>
+            <div id="exp-box" class="exp-box">✅ <b>정답 및 해설:</b> <span id="exp-text"></span></div>
+
+            <button id="next-btn" class="btn-next" type="button" onclick="nextQuestion()">다음 문제로</button>
+        </div>
+
+        <button class="list-btn" type="button" onclick="goList()">🏠 목록으로 돌아가기</button>
+    </div>
+
+    <div id="result-screen" class="result-card">
+        <h2 id="result-title">🎊 학습을 마쳤습니다!</h2>
+        <p id="result-score" class="result-score"></p>
+        <p id="result-detail" class="result-detail"></p>
+        <p id="result-msg"></p>
+        <details id="missed-details" class="missed">
+            <summary id="missed-summary"></summary>
+            <ol id="missed-list"></ol>
+        </details>
+        <button id="retry-missed-btn" class="result-btn" type="button" style="background:var(--primary); color:white; border:none;" onclick="retryMissed()"></button>
+        <button class="result-btn" type="button" onclick="retryAll()">🔄 처음부터 다시 풀기</button>
+        <button class="result-btn" type="button" onclick="location.href='index.html'">🏠 목록으로 돌아가기</button>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 3, title: "가족의 변화와 여성" };
+</script>
+
+<!-- ③ 퀴즈 데이터: 노트북LM이 만든 const quizData = [...]; 를 통째로 덮어쓰세요.
+     아래 1문항은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     문제마다 type, q, o, a, h, e 가 모두 있어야 하고, a는 첫 번째 보기가 0입니다. -->
+<script>
+    const quizData = [
+        {
+            "type": "개념확인",
+    "q": "한국 사회의 가족 형태 변화 양상에 대한 설명으로 옳지 않은 것은? [워크북 p.35, 교재 p.29-30, 2025 기말]",
+    "o": [
+      "1인 가구의 비중은 계속해서 확대되는 추세를 보인다.",
+      "다문화 가구는 해마다 지속적으로 증가하는 경향을 보인다.",
+      "자녀가 있는 가구의 비중은 점차 줄어들고 있다.",
+      "3세대 이상 동거 가구는 감소세를 멈추고 최근 다시 늘어나는 흐름을 보인다."
+    ],
+    "a": 3,
+    "h": "조부모, 부모, 자녀가 함께 사는 3세대 이상 동거 가구는 꾸준히 줄어들고 있음을 확인하세요.",
+    "e": "한국 사회에서는 1인 가구 및 부부 중심 1세대 가구가 급증하는 반면, 자녀가 있는 가구 및 3세대 동거 가구는 지속적으로 감소하고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "가족에 대한 인식 변화에 대한 설명으로 가장 적절한 것은? [워크북 p.35, 교재 p.31-32, 2025 기말]",
+    "o": [
+      "혈연 중심의 전통적 가족 개념이 점차 약화되고 있다.",
+      "젊은 세대일수록 사위나 며느리를 가족으로 보는 경향이 더 강하다.",
+      "고령층일수록 친구나 반려동물까지 가족으로 인정하는 비율이 높다.",
+      "모든 세대에서 가족의 범위를 법적 친족 중심으로만 제한하려는 인식이 강화되고 있다."
+    ],
+    "a": 0,
+    "h": "전통적인 혼인·혈연 중심 관계에서 벗어나 정서적 유대와 생활 공유를 중시하는 인식 변화를 떠올리세요.",
+    "e": "최근 가족 인식은 혈연 및 법적 관계 중심에서 실질적 정서 연대 및 생활 공동체 중심으로 변화하며, 혈연 중심 가족관이 점차 약화되고 있습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "한국 사회의 가족 관련 변화에 대한 설명으로 적절하지 않은 것은? [워크북 p.36, 교재 p.32-34, 2025 기말]",
+    "o": [
+      "부모 부양 문제를 국가나 사회의 책임으로 보는 인식이 확산되고 있다.",
+      "부부 간 가사노동을 보다 균등하게 나누는 경향이 확대되고 있다.",
+      "비혼·비출산 등 다양한 가족 가치관을 수용하는 분위기가 커지고 있다.",
+      "한국의 혼인 외 출생 비율은 OECD 평균보다 높은 수준이다."
+    ],
+    "a": 3,
+    "h": "한국의 혼인 외 출생 비율(약 2~3%)은 유교적 가족 규범으로 인해 OECD 평균(약 40% 이상)에 비해 극히 낮은 수준임을 떠올리세요.",
+    "e": "한국은 프랑스 등 유교권 밖 유럽 국가들에 비해 법적 혼인 틀 밖에서의 출생(혼인 외 출생률) 비율이 OECD 국가 중 가장 낮은 편에 속합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "가임 여성 1명이 평생 낳을 것으로 예상되는 평균 출생아 수를 뜻하는 통계 지표는? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "합계출산율 (Total Fertility Rate)",
+      "조출생률 (Crude Birth Rate)",
+      "모성사망률 (Maternal Mortality Rate)",
+      "총부양비 (Total Dependency Ratio)"
+    ],
+    "a": 0,
+    "h": "한국이 0.7명대로 세계 최저 수준을 기록하고 있는 대표적 인구 지표입니다.",
+    "e": "합계출산율(TFR)은 여성 1명이 평생 낳을 것으로 기대되는 평균 자녀 수로, 인구 유지 선(2.1명)을 밑도는 초저출생 현상을 진단하는 핵심 기준입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "대한민국 전체 가구 중 가장 높은 비중(약 34~35%)을 차지하며 주된 가구 형태로 자리 잡은 유형은? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "1인 가구",
+      "4인 핵가족 가구",
+      "3세대 동거 가구",
+      "소녀가장 가구"
+    ],
+    "a": 0,
+    "h": "전통적 4인 가구를 제치고 한국 사회에서 가장 흔한 가구 형태가 된 1인 가구입니다.",
+    "e": "한국 사회는 독신, 청년 독립, 노인 홀몸가구 등의 증가로 1인 가구가 전체 가구의 3분의 1 이상을 차지하며 가장 비중이 큰 가구 유형이 되었습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "대한민국 「민법」 제779조가 규정하는 법적 가족의 범위에 속하지 않는 사람은? [교재 p.35, 워크북 p.30]",
+    "o": [
+      "10년간 함께 동거하며 사실혼 관계를 유지한 배우자",
+      "법적 혼인 관계에 있는 배우자",
+      "직계혈족 (부모, 자녀)",
+      "형제자매"
+    ],
+    "a": 0,
+    "h": "민법상 가족은 법적 혼인과 혈연으로 연결된 친족에 한정되며 사실혼 배우자는 제외됨을 확인하세요.",
+    "e": "민법 제779조의 가족 범위는 배우자, 직계혈족, 형제자매 등으로 제한되어 있어, 실질적 생활을 공유하는 사실혼 배우자는 법적 가족에서 배제됩니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "민법과 달리 실질적 생계 공유를 인정하여 사실혼 배우자도 수급 가구원으로 포함하는 사회복지 법률은? [교재 p.36, 워크북 p.30]",
+    "o": [
+      "국민기초생활보장법 및 긴급복지지원법",
+      "상속세 및 증여세법",
+      "부동산 등기법",
+      "가족관계의 등록 등에 관한 법률"
+    ],
+    "a": 0,
+    "h": "취약계층의 최저생활 보장과 긴급 구호를 다루는 공공부조 관련 법률입니다.",
+    "e": "국민기초생활보장법과 긴급복지지원법 등 공공부조 법률은 실질적 부양과 생계 공유를 고려하여 사실혼 배우자도 수급 대상 가구원에 포함합니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "프랑스가 1999년 도입하여 비혼 동거 커플에게도 법적 결혼에 준하는 복지·세제 혜택을 부여한 제도는? [교재 p.37-38, 워크북 p.31]",
+    "o": [
+      "시민연대협약 (PACS, 팍스)",
+      "두루누리 사회보험",
+      "디딤돌 안심소득",
+      "가족 돌봄 할당제"
+    ],
+    "a": 0,
+    "h": "결혼이라는 틀에 매이지 않고 유연하게 가족을 형성하도록 돕는 프랑스의 계약 제도입니다.",
+    "e": "프랑스의 시민연대협약(PACS)은 비혼 동거 가구에 정식 혼인에 준하는 혜택을 제공함으로써 높은 혼인 외 출생률과 유연한 가족 형성을 이끌었습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 1인 가구의 연령대별·성별 분포 특징에 대한 설명으로 옳은 것은? [교재 p.39-40, 워크북 p.31-32]",
+    "o": [
+      "20~30대 청년층 1인 가구는 남성이 많고, 60대 이상 고령층 1인 가구는 여성이 많다.",
+      "모든 연령대에서 여성 1인 가구가 남성보다 10배 이상 압도적으로 많다.",
+      "60대 이상 노인 1인 가구는 100% 남성으로 구성된다.",
+      "청년층과 고령층 모두 남녀 비율이 50:50으로 정확히 일치한다."
+    ],
+    "a": 0,
+    "h": "청년기 미혼 남성 독립과 노년기 남편 사별 후 홀로 남는 여성 노인 1인 가구의 차이를 상기하세요.",
+    "e": "한국 1인 가구 지형은 청년층의 경우 미혼 남성 비중이 높고, 고령층의 경우 사별과 기대수명 차이로 여성 노인 1인 가구 비중이 월등히 높습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "대한민국의 지역별 1인 가구 연령대 집중 현상에 대한 설명으로 올바른 것은? [교재 p.40-41, 워크북 p.32]",
+    "o": [
+      "30대 이하 청년 1인 가구는 대도시(서울·세종)에, 60대 이상 고령 1인 가구는 시골·농어촌(전남·경북)에 밀집함",
+      "60대 이상 노인 1인 가구는 서울 강남구에만 100% 거주함",
+      "30대 이하 청년 1인 가구가 농어촌 오지에 가장 많이 거주함",
+      "전국 모든 지자체의 1인 가구 연령 구조가 완전히 동일함"
+    ],
+    "a": 0,
+    "h": "취업·학업을 위한 청년층의 대도시 집중과 농어촌 지역 노인 홀몸가구 고령화 현상을 반영합니다.",
+    "e": "청년 1인 가구는 일자리와 대학이 밀집한 서울·세종 등 대도시에 집중되는 반면, 고령 1인 가구는 전남, 경북 등 농어촌 시골 지역에 집중 분포합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "부부 간 가사노동 분담에 대한 한국 사회의 '인식과 실태 간의 갭(격차)'은? [교재 p.33, 워크북 p.28-29]",
+    "o": [
+      "'공평하게 분담해야 한다'는 당위적 인식은 높아졌으나, 실제 행동 분담은 여전히 여성이 가사·돌봄의 대부분을 전담함",
+      "남성이 실제 가사노동의 90%를 전담하고 여성은 전혀 하지 않음",
+      "인식과 실제 행동 분담률이 50:50으로 완전 일치함",
+      "가사노동 분담에 대한 국민적 관심이 0%로 소멸함"
+    ],
+    "a": 0,
+    "h": "의식 조사에서는 균등 분담 찬성이 대다수이나 실생활 가사 수행 시간은 여성이 수 배 더 길게 나타납니다.",
+    "e": "가사 분담에 대해 '부부가 공평하게 나누어야 한다'는 생각은 크게 증가했으나, 실제 현장에서는 여전히 여성이 가사 및 육아의 주된 부담을 지고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "결혼은 필수가 아닌 선택이라는 인식과 함께 의도적으로 자녀를 낳지 않고 부부의 삶을 즐기는 가구는? [교재 p.33-34, 워크북 p.29]",
+    "o": [
+      "딩크족 (DINK)",
+      "통근 가구",
+      "3세대 가구",
+      "조손 가구"
+    ],
+    "a": 0,
+    "h": "Double Income, No Kids의 약자로 무자녀를 선택하는 맞벌이 가구입니다.",
+    "e": "딩크족(DINK)은 맞벌이 소득을 유지하면서 의도적으로 자녀를 두지 않는 가구 형태로, 출산과 결혼 가치관의 다변화를 보여줍니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "성남시 '같이 살자' 사업 등 지자체 차원에서 1인 가구를 위해 추진하는 복지 정책의 주요 목표는? [교재 p.41-42, 워크북 p.32]",
+    "o": [
+      "1인 가구의 사회적 관계망 형성 지원, 주거 불안 해소 및 고독사 예방",
+      "1인 가구 전원의 사립 대학 입학 강제",
+      "1인 가구에게 매월 1억 원의 부동산 매입 자금 지원",
+      "1인 가구의 혼자 살기를 법적으로 금지"
+    ],
+    "a": 0,
+    "h": "청년·중장년·고령 1인 가구가 지역사회에서 소통하고 상호 돌봄 관계망을 형성하도록 돕는 지원입니다.",
+    "e": "지자체의 1인 가구 동아리, 셰어하우스 지원 등은 혼자 사는 가구의 사회적 고립과 정서적 우울, 고독사 위험을 줄이기 위한 복지 대응입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "전통적 '정상가족' 패러다임을 탈피하여 대안적 가족(한부모, 동거, 다문화)을 포용할 때 필요한 여성복지의 과제는? [교재 p.43-44, 워크북 p.33]",
+    "o": [
+      "가족 형태와 상관없이 모든 가구원이 복지 수혜 및 법적 보호에서 차별받지 않도록 보편적 안전망 구축",
+      "비혼 동거 가구의 복지 혜택을 100% 삭감",
+      "오직 4인 핵가족에게만 국가 수당을 집중 제공",
+      "한부모 가구의 자녀 양육권을 전액 국가로 몰수"
+    ],
+    "a": 0,
+    "h": "법적 혼인 여부나 가구 형태 차이로 인해 복지 사각지대가 발생하지 않도록 제도를 유연화하는 과제입니다.",
+    "e": "미래 여성복지는 다양해진 가족 지형을 인정하고, 가구 형태에 따른 사회적 차별과 복지 낙인을 해소하여 공평한 복지 권리를 보장해야 합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "가족 내 무급 가사·돌봄 노동이 여성에게 전담되는 구조가 여성의 생애 전반에 가져오는 악순환은? [교재 p.44-45, 워크북 p.33-34]",
+    "o": [
+      "여성의 노동시장 경력단절과 소득 감소를 낳고 노년기 연금 미달로 인한 소득 빈곤으로 누적됨",
+      "여성의 사적 자산이 10배로 무한 증대됨",
+      "여성의 대기업 임원 승진율이 100%로 상승함",
+      "남성의 가사노동 분담률이 세계 1위가 됨"
+    ],
+    "a": 0,
+    "h": "무급 돌봄 전담 -> 경제활동 중단 -> 국민연금 가입 기간 부족 -> 노후 빈곤으로 이어지는 악순환입니다.",
+    "e": "가족 내부의 돌봄 책임이 여성에게 집중되면 경제활동 이탈과 경력단절을 초래하여, 노후의 독자적 소득원 부재와 빈곤으로 이어집니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "초고령사회 진입에 따라 고령의 배우자가 다른 고령의 배우자를 수발하는 현상을 뜻하는 용어는? [교재 p.41, 워크북 p.32]",
+    "o": [
+      "노노케어 (老老 Care)",
+      "샌드위치 케어",
+      "디지털 케어",
+      "기초 케어"
+    ],
+    "a": 0,
+    "h": "60~70대 이상 노인이 다른 병석의 고령 노인을 돌보는 현상입니다.",
+    "e": "노노케어는 고령화 심화 속에서 노인이 노인을 돌보는 현상으로, 특히 여성 노인의 신체적·심리적 돌봄 부담을 과중시키는 요인입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "부부 가구 중 자녀 부양과 부모 부양의 책임이 국가와 사회로 이전되어야 한다는 인식이 확산되는 구조적 원인은? [교재 p.32, 워크북 p.28]",
+    "o": [
+      "가족의 사적 부양 능력 한계와 사회적 위험에 대한 공적 돌봄 책임(돌봄의 사회화) 요구 증대",
+      "가족 간의 정서적 유대가 100% 소멸했기 때문",
+      "부모 부양을 하는 자녀에게 형사 처벌이 부과되기 때문",
+      "국가가 모든 부모에게 매월 10억 원을 무상 지급하기 때문"
+    ],
+    "a": 0,
+    "h": "개인이나 가족만의 힘으로는 장기 돌봄과 부양 부담을 감당하기 어려워진 사회적 구조 변화 때문입니다.",
+    "e": "부양에 대한 인식 변화는 돌봄을 사적 가족 책임에서 국가와 사회가 함께 짊어져야 할 공적 책임으로 보는 돌봄의 사회화 관점을 반영합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "제3강 '가족의 변화와 여성' 단원이 제시하는 복지 정책의 기본 지향점은? [교재 p.28-52, 워크북 p.26-38]",
+    "o": [
+      "가족 형태의 다변화를 수용하고 돌봄의 성별 불평등을 해소하는 유연하고 포용적인 성평등 가족복지 구축",
+      "조선시대 유교적 가부장 가족 질서의 완전한 복원",
+      "1인 가구의 발생을 법적으로 원천 차단하는 정책",
+      "모든 가족 정책 예산의 전액 삭감"
+    ],
+    "a": 0,
+    "h": "변화하는 가족 구조를 인정하고 여성에게 전가되던 돌봄을 사회화하는 성평등 복지 지향입니다.",
+    "e": "3장은 가족 형태와 가치관의 급변 속에서 획일적 정상가족관을 넘어 다양한 가구를 포용하고, 여성의 돌봄 부담을 터는 복지 재설계를 강조합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "전통적 가부장제 가족에서 가장 중심의 권력과 남성 생계부양자 모델이 흔들리게 된 주요 경제적 요인은? [교재 p.28, 워크북 p.26]",
+    "o": [
+      "산업구조의 변화와 고용 불안정성 증대, 그리고 여성의 유급 노동시장 진출 확대",
+      "남성의 노동생산성이 100배 상승했기 때문",
+      "국가가 모든 남성에게 무상 주택을 제공했기 때문",
+      "여성의 가사노동이 법적으로 전면 금지되었기 때문"
+    ],
+    "a": 0,
+    "h": "남성 혼자 벌어 가족을 부양하기 힘들어진 경제적 여건과 여성의 경제활동 증가가 원인입니다.",
+    "e": "남성 생계부양자 모델의 해체는 고용 불안정 심화로 외벌이가 힘들어지고 여성의 교육 및 노동시장 진출이 늘어난 구조적 변화에 기인합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회에서 '결혼은 반드시 해야 한다'는 전통적 당위관이 급격히 약화되었음을 보여주는 지표는? [교재 p.31, 워크북 p.27]",
+    "o": [
+      "미혼 남녀의 결혼 긍정 비율 감소 및 평균 초혼 연령의 지속적 상승",
+      "전국 모든 20대의 100% 조기 결혼",
+      "결혼 비용의 90%를 국가가 전액 부담하는 제도",
+      "이혼을 한 부부에 대한 형사 처벌 법안"
+    ],
+    "a": 0,
+    "h": "결혼에 대한 필수적 인식이 선택적 인식으로 전환되며 초혼 연령이 30대 중반으로 높아지는 현상입니다.",
+    "e": "결혼 가치관의 변화로 인해 '결혼을 해야 한다'는 응답 비율은 급감하고, 만혼(늦은 결혼)과 비혼 선택 비율이 급증하고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회의 1인 가구가 급증하게 된 3대 주요 사회·경제적 원인은? [교재 p.39, 워크북 p.31]",
+    "o": [
+      "청년층의 비혼·만혼 및 독신 증가, 고령화에 따른 노인 사별 1인 가구 급증, 이혼율 증가",
+      "모든 다인 가구에 대한 과중한 세금 부과",
+      "정부가 1인 가구에게만 아파트 무상 분양을 시행하기 때문",
+      "대학교 기숙사 입학이 법적으로 전면 금지되었기 때문"
+    ],
+    "a": 0,
+    "h": "청년층 비혼 독립, 중년층 이혼, 고령층 사별 등 생애 단계별 1인 가구 형성 원인을 파악하세요.",
+    "e": "1인 가구 증가는 청년층의 독립 및 비혼 선호, 중년층의 이혼·별거, 고령층의 사별에 따른 독거노인 증가가 복합 작용하여 나타난 결과입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "다문화 가구의 증가에 따른 다문화 이주여성의 복지 욕구 변화 특징은? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "초기 단순 한국어·음식 적응 지원을 넘어 자녀 양육, 취업 훈련, 가정폭력 예방 및 체류 자격 안정 욕구로 다변화됨",
+      "오직 한국 전통 예절 교육만 요구함",
+      "모든 이주여성이 본국으로의 강제 귀환만을 원함",
+      "복지 서비스의 100% 전면 거부"
+    ],
+    "a": 0,
+    "h": "정착 단계가 깊어짐에 따라 단순 동화 정책에서 노동, 인권, 자녀 교육 등 다양하고 주체적인 욕구로 변화합니다.",
+    "e": "다문화 가구 이주여성의 복지 욕구는 단순 언어·문화 적응 지원에서 자녀 학업 지원, 직업 훈련, 법적 권리 및 인권 보호로 고도화되고 있습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "전통적 가족 가치관 중 '부모 부양'에 대한 세대 간 인식 변화 실태는? [교재 p.32, 워크북 p.28]",
+    "o": [
+      "'부모 부양은 장남이나 자녀가 담당해야 한다'는 응답은 급감하고, '가족·사회·국가가 함께 담당해야 한다'는 응답이 대다수를 차지함",
+      "부모 부양은 오직 셋째 딸이 전담해야 한다는 인식이 1위가 됨",
+      "부모 부양을 국가가 100% 전담하므로 자녀의 부양 의무가 법적으로 소멸함",
+      "모든 부모가 자녀의 부양을 거부하는 비율이 100%가 됨"
+    ],
+    "a": 0,
+    "h": "가족 내부 사적 책임(장남 전담)에서 복지국가의 공적 부양 책임 분담으로 전환되는 트렌드입니다.",
+    "e": "부모 부양 의식은 과거 자녀(특히 장남)의 전형적 의무에서, 가족의 일부 부담과 함께 공적 사회보장이 이를 분담해야 한다는 인식으로 바뀌었습니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "결혼 후 직장 생활과 육아를 병행하는 여성 근로자가 직면하는 '이중 노동(Double Burden)'의 의미는? [교재 p.44, 워크북 p.33]",
+    "o": [
+      "노동시장에서의 유급 노동을 마친 후 집으로 돌아와 무급 가사·육아 노동을 추가로 전담하는 현상",
+      "직장 두 곳에서 투잡을 뛰는 현상",
+      "낮과 밤에 각각 다른 국가로 출장 가는 현상",
+      "남편 대신 군대에 복무하는 현상"
+    ],
+    "a": 0,
+    "h": "직장 일(유급)과 가정 일(무급)의 이중 굴레를 혼자 짊어지는 워킹맘의 과중한 현실입니다.",
+    "e": "이중 노동(Double Burden)은 맞벌이 여성들이 노동시장에서의 유급 노동 외에도 가정 내 가사·돌봄 책임을 혼자 짊어지며 겪는 시간 부족과 피로를 뜻합니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "현행 대한민국 사회보장제도가 '정상가족'을 표준으로 설계되어 발생하는 문제점은? [교재 p.35-36, 워크북 p.30]",
+    "o": [
+      "1인 가구, 비혼 동거, 사실혼 가구가 공적 주택 분양, 건강보험 피부양자 등록, 가족 수당 등에서 사각지대에 놓임",
+      "4인 가구의 모든 세금이 100배 부과됨",
+      "비혼 가구에게 법적으로 연금을 10배 지급함",
+      "정상가족의 소유 부동산이 전액 국유화됨"
+    ],
+    "a": 0,
+    "h": "법적 혼인·혈연 가구만을 우대하여 비혼·동거·1인 가구가 복지 혜택에서 소외되는 사각지대 문제입니다.",
+    "e": "기존 제도가 부모와 자녀 중심의 정상가족만을 혜택 표준으로 삼아, 급증하는 대안적 가구 형태에 속한 개인들이 사회적 안전망에서 배제됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "남편과 아내가 직장 위치나 주거 사정으로 떨어져 살면서 정서적 결합을 유지하는 가구 형태는? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "통근 가구 (Commuter Family / 주말부부)",
+      "3세대 동거 가구",
+      "조손 가구",
+      "단독 외국인 가구"
+    ],
+    "a": 0,
+    "h": "경제 활동과 거주지의 공간적 분리로 발생하는 주말부부 등 통근 가구 형태입니다.",
+    "e": "통근 가구는 취업, 교육 등의 이유로 공간적으로 분리되어 거주하지만 유대감을 유지하는 현대의 유연한 부부 가구 형태 중 하나입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "조부모가 이혼, 가출, 사망 등으로 친부모를 대신하여 손자녀를 전적으로 양육하는 가구 형태는? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "조손 가구",
+      "딩크 가구",
+      "단독 가구",
+      "원자 가구"
+    ],
+    "a": 0,
+    "h": "할머니·할아버지가 손주를 키우며 경제적·신체적 어려움을 겪는 조손 가구입니다.",
+    "e": "조손 가구는 조부모와 손자녀로 구성된 가구로, 조부모의 고령화와 경제적 빈곤으로 인해 특별한 복지적 지원이 절실한 대상입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회에서 '이혼'에 대한 대중적 인식 변화의 본질적 방향은? [교재 p.31-32, 워크북 p.28]",
+    "o": [
+      "과거 가문의 수치나 낙인으로 보던 시각에서, 불행한 결혼을 끝내고 개인의 행복을 위한 정당한 선택으로 보는 시각 확산",
+      "이혼을 한 부부에 대해 법적으로 재산을 전액 몰수해야 한다는 인식 확산",
+      "모든 이혼을 법적으로 금지해야 한다는 유교적 인식의 100% 복원",
+      "이혼 후 재혼을 한 사람에게 국가 표창장을 수여하는 정책"
+    ],
+    "a": 0,
+    "h": "결혼 생활의 주체적 해체와 개인의 존엄성·행복을 우선시하는 가치관 변화입니다.",
+    "e": "이혼에 대한 인식은 도덕적 금기에서 벗어나 개인의 자율적 삶과 행복을 위한 선택으로 수용되는 경향이 강화되었습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "저출생 문제 해결을 위한 복지 정책이 여성에게 출산을 강요하는 방식을 벗어나 지향해야 할 방향은? [교재 p.46, 워크북 p.34]",
+    "o": [
+      "성평등한 일·가정 양립 체계 구축 및 여성의 노동권과 돌봄권이 균형을 이루는 사회적 환경 조성",
+      "가임기 여성 전원에게 출산 강제 의무 할당제 적용",
+      "미혼 여성에게 연 1억 원의 독신세 과세",
+      "여성의 노동시장 진출을 법적으로 완전 금지"
+    ],
+    "a": 0,
+    "h": "출산율 숫자에만 집착하지 않고 여성의 삶의 질과 성평등한 노동·돌봄 환경을 만드는 정책 전환입니다.",
+    "e": "저출생 대책은 여성을 인구 통제의 도구로 보지 않고, 일과 삶의 균형, 남성의 돌봄 참여, 성평등한 사회 구조를 만드는 방향으로 추진되어야 합니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "노년기 여성 홀몸가구가 겪는 '3대 이중·삼중 고통(위험)'에 해당하지 않는 것은? [교재 p.40-41, 워크북 p.32]",
+    "o": [
+      "과도한 사적 금융 자산 관리로 인한 불로소득 과세 부담",
+      "경제적 빈곤과 독자 소득원 부재",
+      "신체적 만성질환 및 수발자 부재",
+      "사회적 고립과 외로움 및 고독사 위험"
+    ],
+    "a": 0,
+    "h": "여성 독거노인은 빈곤, 질병, 외로움이라는 3대 위험에 직면해 있습니다.",
+    "e": "여성 노인 1인 가구는 낮은 연금 수급으로 인한 빈곤, 아픈 몸을 수발할 사람의 부재, 외로움과 사회적 고립이라는 복합적 위험에 처해 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "가족 내 무급 돌봄 노동의 가치를 경제적으로 평가하고 사회보장 제도에 반영하려는 복지적 노력은? [교재 p.45, 워크북 p.34]",
+    "o": [
+      "돌봄 크레디트(국민연금 출산·돌봄 크레디트 등) 제도 확대",
+      "가사노동 전담자에게 매월 세금 100% 과세",
+      "가사노동을 유급 노동시장에 출품하는 것을 법적으로 금지",
+      "전업주부의 건강보험 피부양자 자격 박탈"
+    ],
+    "a": 0,
+    "h": "육아나 돌봄 기간을 국민연금 가입 기간으로 인정해 주는 돌봄 크레디트 제도입니다.",
+    "e": "돌봄 크레디트는 자녀 양육 등 무급 돌봄 시간을 공적 연금 가입 기간으로 인정하여, 여성의 노후 소득 보장을 돕는 성인지적 제도입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "청년층 여성 1인 가구가 대도시에서 경험하는 주거 환경의 주요 불안 요인은? [교재 p.40, 워크북 p.32]",
+    "o": [
+      "높은 주거비 부담과 함께 좁은 주거 공간, 주거 침입 및 스토킹 등 치안·안전 불안",
+      "대저택 관리에 들어가는 무제한 청소비 부담",
+      "모든 청년 여성에게 아파트가 무료로 지급되어 발생하는 과잉 수유",
+      "주거지 내 모든 남성의 출입이 법적으로 차단되는 고립"
+    ],
+    "a": 0,
+    "h": "열악한 원룸 주거비 문제와 여성 대상 범죄 및 안전 불안 문제를 떠올리세요.",
+    "e": "청년 여성 1인 가구는 높은 월세 부담과 열악한 주거 환경뿐만 아니라, 주거 범죄 및 안전에 대한 불안을 높게 경험합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국의 한부모 가구 중 '여성 한부모 가구'가 남성 한부모에 비해 겪는 상대적 취약성은? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "성별 임금격차로 인한 낮은 소득 level과 양육비 미지급 문제로 인한 심각한 아동 빈곤 위험",
+      "여성 한부모의 평균 소득이 남성보다 5배 높은 점",
+      "양육비 이행관리원이 여성 한부모의 신청을 전면 거부하는 점",
+      "모든 여성 한부모 가구에 공무원 임명이 강제되는 점"
+    ],
+    "a": 0,
+    "h": "여성 저임금 노동 현실과 비양육 부모의 양육비 미지급이 결합된 빈곤 취약성입니다.",
+    "e": "여성 한부모 가구는 모(母)의 저임금 노동 구조와 양육비 수령의 어려움이 겹쳐 상대적으로 높은 빈곤율을 나타냅니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "양육비를 지급하지 않는 비양육 부모의 신상을 공개하고 형사 처벌 및 운전면허 정지를 가능하게 한 법률 제도는? [교재 p.45, 워크북 p.34]",
+    "o": [
+      "양육비 이행확보 및 지원에 관한 법률 (양육비 이행강제 제도)",
+      "가정폭력 처벌법",
+      "성폭력 방지법",
+      "남녀고용평등법"
+    ],
+    "a": 0,
+    "h": "한부모 가구 아동의 생존권을 위해 양육비 미지급자에 대한 제재를 강화한 제도입니다.",
+    "e": "양육비 이행강제 제도는 양육비를 주지 않는 부모의 명단을 공개하고 출국금지, 운전면허 정지 등 법적 제재를 통해 한부모 가구를 보호합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "부부 간 가사노동 분담을 실질적으로 균등하게 만들기 위해 요구되는 구조적 변화는? [교재 p.44-45, 워크북 p.33-34]",
+    "o": [
+      "남성의 노동시간 단축 및 육아휴직 강제/권장(아빠 할당제 등)과 남성 성역할 인식 개혁",
+      "여성의 노동시간을 1일 24시간으로 연장",
+      "모든 가사 노동자를 국가 공무원으로 고용",
+      "남성의 가정 내 대화 금지"
+    ],
+    "a": 0,
+    "h": "남성이 육아와 가사에 참여할 수 있도록 조직 노동문화를 바꾸고 아빠 육아휴직을 제도화하는 방향입니다.",
+    "e": "실질적 가사 분담을 위해서는 의식 개혁뿐만 아니라, 남성이 눈치 보지 않고 육아휴직을 쓸 수 있는 노동시장 환경과 장시간 근로 개선이 필수적입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "북유럽 국가들이 도입하여 남성 근로자의 육아휴직 참여율을 획기적으로 높인 제도는? [교재 p.45, 워크북 p.34]",
+    "o": [
+      "아빠 할당제 (Daddy's Quota / 남성 육아휴직 전용제)",
+      "전업주부 수당제",
+      "가족 동거 의무제",
+      "정년 연장제"
+    ],
+    "a": 0,
+    "h": "부모 육아휴직 기간 중 일정 기간을 남성 전용으로 할당하여 양도할 수 없게 만든 제도입니다.",
+    "e": "아빠 할당제는 남성이 육아휴직을 쓰지 않으면 해당 기간의 휴직 급여가 소멸하도록 하여 남성의 육아 참여를 제도적으로 강제·유도합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "혼인 상태를 유지하고 있으나 사실상 별거 상태이거나 경제적·정서적 유대가 완전히 단절된 가구를 뜻하는 개념은? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "실질적 해체 가구 (가상 유지 가구)",
+      "확장 가구",
+      "다세대 가구",
+      "혈연 통합 가구"
+    ],
+    "a": 0,
+    "h": "서류상 혼인은 유지되어 있으나 실제로는 같이 살지 않거나 남아처럼 지내는 가구 형태입니다.",
+    "e": "실질적 해체 가구는 서류상 법적 가구 형태는 유지되지만 정서적·경제적 기능이 해체된 가구로, 법적 보장과 실제 지원 간의 갭을 낳습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "고령화 사회에서 '딸'이나 '며느리'에게 노부부 부양의 책임이 집중되었던 전통적 돌봄 구조의 문제는? [교재 p.41, 워크북 p.32]",
+    "o": [
+      "여성의 경제활동 기회를 박탈하고 신체적·정신적 고통을 초래하므로 돌봄의 공적 사회화가 절실함",
+      "딸과 며느리의 금융 자산이 10배 늘어나는 효과",
+      "노부모의 질병이 즉시 100% 완치되는 효과",
+      "모든 남성의 가사노동 분담률이 자동 100%가 되는 효과"
+    ],
+    "a": 0,
+    "h": "사적 가정 내 여성 돌봄 노동자에게 책임을 전가하여 여성의 삶을 피폐하게 만든 가부장적 부양 구조입니다.",
+    "e": "과거 노부모 돌봄이 딸이나 며느리 등 사적 여성에게 과중하게 전가되었던 한계를 극복하기 위해 장기요양보험 등 공적 돌봄 확충이 추진되고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "가족 가치관의 수용성 확장 측면에서, 젊은 세대를 중심으로 늘어나는 '비혼 독신' 삶의 선택 원인은? [교재 p.31, 워크북 p.27-28]",
+    "o": [
+      "주거비·양육비 부담 등 경제적 요인과 개인의 자율적 삶 존중 및 성불평등적 가부장 가구 진입 거부",
+      "독신자에게 국가가 매월 1억 원의 포상금을 지급하기 때문",
+      "모든 결혼식장이 법적으로 전면 폐쇄되었기 때문",
+      "독신자의 수명이 부부보다 50년 연장되기 때문"
+    ],
+    "a": 0,
+    "h": "높은 주거·양육 비용이라는 구조적 제약과 함께 불평등한 전통 가부장적 결혼에 대한 거부감 때문입니다.",
+    "e": "비혼 청년의 증가 원인은 과도한 결혼·주거 비용 부담과 더불어 개인의 자아실현 중시 및 불평등한 성역할 부담을 피하려는 의식이 작용한 결과입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "가족 정책이 '가구 단위' 지원에서 '개인 단위' 지원으로 전환되어야 하는 이유는? [교재 p.43-44, 워크북 p.33]",
+    "o": [
+      "가구주(남성 가장) 중심 지원은 가구 내 여성·아동 등 약자의 독자적 권리를 침해하고 복지 사각지대를 낳기 때문",
+      "개인 단위 지원을 하면 국가 예산이 0원으로 줄어들기 때문",
+      "모든 국민의 주민등록번호를 폐지하기 위함",
+      "가구주에게만 100% 세금을 과세하기 위함"
+    ],
+    "a": 0,
+    "h": "남성 가장 1인에게 수급권이 집중되면 가구 내 여성 구성원이 실제 혜택에서 배제될 수 있음을 지적합니다.",
+    "e": "복지 정책이 가구 단위로 지급되면 가구 내 권력관계에 따라 정작 도움이 필요한 여성이나 취약 구성원이 혜택을 받지 못하므로 개인별 독자적 수급권이 보장되어야 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "이주여성이 결혼을 통해 한국 가구로 들어왔을 때 경험하는 '다문화 가구 내 젠더 문제'는? [교재 p.30, 워크북 p.27]",
+    "o": [
+      "가부장적 순종을 강요받거나 언어 소통 미숙으로 인한 가정폭력 및 체류 자격 남편 종속 위험",
+      "이주여성 전원이 한국 대기업 사장으로 자동 채용됨",
+      "가정 내 모든 경제권을 이주여성이 100% 독점함",
+      "이주여성에게만 100% 무상 국고 연금 지급"
+    ],
+    "a": 0,
+    "h": "한국인 남편과의 이중적 위계 구조 속에서 이주여성이 겪는 법적·사회적 취약성입니다.",
+    "e": "다문화 가구 내 이주여성은 인종적·성별적 불평등이 교차하며 남편과 시댁의 가부장적 통제 및 체류 불안정에 노출되기 쉽습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "저출생 및 고령화 극복을 위해 '돌봄의 사회화'가 완성되었을 때 사회가 얻는 성평등적 효과는? [교재 p.44-46, 워크북 p.33-34]",
+    "o": [
+      "여성의 돌봄 전담 부담이 줄어들어 노동시장 참가가 활성화되고 남성의 돌봄 권리가 보장됨",
+      "모든 돌봄 시설이 폐쇄되어 가정이 100% 수발함",
+      "여성의 월급이 남성의 10배로 상승함",
+      "국가의 모든 공공기관이 민영화됨"
+    ],
+    "a": 0,
+    "h": "아동·노인 돌봄을 공공이 책임짐으로써 여성의 경력단절을 막고 모두가 돌봄을 나누는 효과입니다.",
+    "e": "돌봄의 사회화는 국공립 보육 및 요양 시설 확충을 통해 여성의 돌봄 독박 부담을 덜고 일과 가정의 균형을 실현하게 돕습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회의 황혼 이혼(혼인 기간 20년 이상 부부의 이혼) 비율이 과거에 비해 크게 늘어난 주요 원인은? [교재 p.31, 워크북 p.28]",
+    "o": [
+      "자녀 양육 의무를 마친 후 가부장적 억압에서 벗어나 주체적 노후 삶을 찾으려는 여성의 요구 증대",
+      "황혼 이혼 시 국가가 10억 원의 이혼 장려금을 주기 때문",
+      "60대 이상 부부의 대화가 100% 법적으로 금지되었기 때문",
+      "모든 노부부의 재산이 국가로 자동 몰수되기 때문"
+    ],
+    "a": 0,
+    "h": "자녀가 성장한 뒤 참고 살던 유교적 가부장 결혼 생활을 정리하려는 여성의 인권 의식 상승 때문입니다.",
+    "e": "황혼 이혼의 증가하는 여성들이 자녀 양육 후 남아있는 생애 동안 자신만의 자율적 삶을 살고자 하는 욕구와 분할재산 청구권 제도의 영향입니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "가정폭력 피해자가 배우자의 협박이나 재발 우려로 피신할 수 있도록 지원하는 공적 보호 시설은? [교재 p.45, 워크북 p.34]",
+    "o": [
+      "가정폭력 피해자 쉼터 (보호시설)",
+      "국민연금 관리공단",
+      "지방 노동위원회",
+      "한국은행 금융센터"
+    ],
+    "a": 0,
+    "h": "피해 여성과 자녀의 긴급 피신 및 주거·상담을 비밀리에 제공하는 보호 시설입니다.",
+    "e": "가정폭력 쉼터는 폭력 피해 여성과 동반 자녀에게 안전한 긴급 주거, 의료, 법률 지원을 제공하여 자립을 돕는 복지 시설입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "부부 중심 1세대 가구가 증가함에 따라 요구되는 중·장년기 부부 관계의 성평등적 과제는? [교재 p.30, p.44, 워크북 p.27, p.33]",
+    "o": [
+      "가사·돌봄의 공평한 분담과 상호 존중하는 수평적 동반자 관계 수립",
+      "남성 가장의 독재적 권력 강화",
+      "아내의 사적 경제활동 전면 금지",
+      "모든 부부의 거주지 이격 배치"
+    ],
+    "a": 0,
+    "h": "자녀가 독립한 후 부부만 남는 가구 구조에서 수평적 권력관계와 가사 나누기가 필수적입니다.",
+    "e": "부부 중심 가구의 증가는 기존 가부장적 위계관계를 해체하고, 서로를 대등한 삶의 파트너로 인정하는 수평적 부부 문화 형성을 요구합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회에서 '가족'이 양육, 교육, 주거 등 과도한 비용 부담으로 인해 일부 계층만 누릴 수 있는 현상을 비유한 표현은? [교재 p.29, 워크북 p.26]",
+    "o": [
+      "가족의 특권화 및 사치품화 현상",
+      "가족의 국유화 현상",
+      "가족의 자동화 현상",
+      "가족의 무상화 현상"
+    ],
+    "a": 0,
+    "h": "치솟는 주거비와 사교육비로 인해 결혼과 출산이 취약계층에게 부담스러운 사치처럼 느껴지는 현상입니다.",
+    "e": "경쟁 심화와 높은 주거·양육비로 인해, 가정을 꾸리고 자녀를 키우는 일이 높은 경제적 자원을 가진 계층의 특권처럼 변하는 현상을 뜻합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "1인 가구를 위한 사회복지 정책을 수립할 때 성별(젠더) 관점을 반영해야 하는 핵심 이유는? [교재 p.40, 워크북 p.32]",
+    "o": [
+      "청년 남성, 청년 여성, 노인 여성 1인 가구가 겪는 주거, 치안, 빈곤, 고립의 위험 양상이 서로 현저히 다르기 때문",
+      "모든 1인 가구의 욕구가 100% 동일하기 때문",
+      "여성 1인 가구에게만 수당을 주고 남성은 배제하기 위함",
+      "1인 가구 정책 예산을 삭감하기 위함"
+    ],
+    "a": 0,
+    "h": "청년 여성의 범죄 불안, 노인 여성의 소득 빈곤 등 성별·연령별로 위험의 종류가 다름을 인지하는 성인지 접근입니다.",
+    "e": "1인 가구 정책은 젠더 관점을 적용하여, 안전에 취약한 청년 여성 1인 가구와 빈곤·질병에 노출된 여성 노인 1인 가구의 특성에 맞춘 세분화된 지원을 해야 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "결혼하지 않은 상태에서 태어난 자녀에 대한 법적·사회적 차별과 낙인을 해소하기 위해 요구되는 정책 개선은? [교재 p.34, 워크북 p.29]",
+    "o": [
+      "혼인 외 출생자에 대한 차별적 법 조항 철폐 및 가족관계등록부상의 신분 낙인 배제",
+      "혼인 외 출생자의 학교 입학을 전면 금지",
+      "미혼모·미혼부에게 법적으로 벌금 1억 원 과세",
+      "모든 혼인 외 출생자를 시설로 강제 수용"
+    ],
+    "a": 0,
+    "h": "법적 혼인 여부와 상관없이 모든 아동의 생존권과 기본권을 동등하게 보장하는 정책입니다.",
+    "e": "혼인 외 출생자에 대한 낙인을 없애고 출생등록 권리와 복지 혜택을 온전히 보장하여 아동과 미혼 부모의 인권을 보호해야 합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "제3장 '가족의 변화와 여성' 단원의 전체 내용을 종합 요약한 결론으로 가장 적절한 것은? [교재 p.28-52, 워크북 p.26-38]",
+    "o": [
+      "한국 사회는 1인 가구 및 다문화 가구 급증 등 가족 지형이 급변하고 있으므로, 획일적 정상가족관에서 벗어나 다양한 가구를 포용하고 여성의 돌봄 독박 부담을 덜어주는 보평적 성평등 가족복지 체계를 구축해야 한다.",
+      "한국의 가족 구조는 조선 시대와 완전히 동일하므로 기존의 가부장적 부양 정책을 지속해야 한다.",
+      "1인 가구의 증가는 국가적 재앙이므로 혼자 사는 모든 개인에게 강력한 법적 처벌을 내려야 한다.",
+      "여성의 가사노동 전담은 자연적 이치이므로 남성의 가사 참여는 법적으로 금지하는 것이 옳다."
+    ],
+    "a": 0,
+    "h": "급변하는 가족 형태 수용, 획일적 정상가족 패러다임 탈피, 돌봄 사회화와 성평등 복지 구축의 종합 결론입니다.",
+    "e": "3장은 가족 가치관과 형태의 다양화를 분석하고, 남성 가장 표준의 정상가족 규범을 넘어 여성의 돌봄 굴레를 터는 유연하고 포용적인 성평등 복지 체계로의 전환을 강조합니다."
+        }
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var allQuestions = [];   // 검사를 통과한 전체 문제
+    var questions = [];      // 지금 풀고 있는 문제 묶음(전체 또는 틀린 문제)
+    var curIdx = 0;
+    var wrongCount = 0;      // 현재 문제에서 틀린 횟수
+    var correctFirst = 0;    // 이번 회차에서 한 번에 맞힌 문제 수
+    var missed = [];         // 이번 회차에서 한 번이라도 틀린 문제
+
+    document.title = '여성복지론 퀴즈 [제' + LECTURE.no + '장]';
+    document.getElementById('lecture-title').textContent = '제' + LECTURE.no + '장: ' + LECTURE.title;
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateQuizData(data) {
+        var errors = [];
+        var warnings = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'quizData가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, warnings: warnings, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = 'Q' + (i + 1);
+            var problems = [];
+
+            if (!item || typeof item !== 'object') {
+                problems.push('문제가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) {
+                    problems.push('q(질문)가 없거나 비어 있습니다.');
+                }
+
+                var oOk = Array.isArray(item.o);
+                if (!oOk) {
+                    problems.push('o(보기)가 배열([ ])이 아닙니다.');
+                } else {
+                    if (item.o.length < 2) {
+                        problems.push('보기가 ' + item.o.length + '개뿐입니다. 2개 이상 필요합니다.');
+                    }
+                    var bad = item.o.some(function (x) { return typeof x !== 'string' || !x.trim(); });
+                    if (bad) {
+                        problems.push('보기 중에 비어 있거나 글자가 아닌 항목이 있습니다.');
+                    } else {
+                        var uniq = {};
+                        item.o.forEach(function (x) { uniq[x.trim()] = true; });
+                        if (Object.keys(uniq).length !== item.o.length) {
+                            problems.push('똑같은 보기가 2개 이상 있습니다.');
+                        }
+                    }
+                }
+
+                if (typeof item.a === 'string') {
+                    problems.push('a(정답 번호)가 따옴표로 감싸져 있습니다("' + item.a + '"). 따옴표 없는 숫자로 바꾸세요.');
+                } else if (!Number.isInteger(item.a)) {
+                    problems.push('a(정답 번호)가 없거나 숫자가 아닙니다.');
+                } else if (oOk && (item.a < 0 || item.a >= item.o.length)) {
+                    if (item.a === item.o.length) {
+                        problems.push('a가 ' + item.a + '입니다. 번호는 0부터 세므로 보기가 ' + item.o.length + '개면 0~' + (item.o.length - 1) + ' 중 하나여야 합니다. 1부터 센 것 같아요(' + item.a + ' → ' + (item.a - 1) + ').');
+                    } else {
+                        problems.push('a가 ' + item.a + '로 보기 범위(0~' + (item.o.length - 1) + ')를 벗어났습니다.');
+                    }
+                }
+
+                if (typeof item.h !== 'string' || !item.h.trim()) {
+                    problems.push('h(힌트)가 없거나 비어 있습니다.');
+                }
+                if (typeof item.e !== 'string' || !item.e.trim()) {
+                    problems.push('e(해설)가 없거나 비어 있습니다.');
+                }
+            }
+
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        
+
+        return { errors: errors, warnings: warnings, valid: valid };
+    }
+
+    /* ---------- 검사 결과 화면 ---------- */
+    function showProblemScreen(opts) {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            if (it.warn) li.className = 'warn';
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startQuiz(list) {
+        allQuestions = list;
+        document.getElementById('problem-screen').style.display = 'none';
+        beginRound(list);
+    }
+
+    // 한 회차 시작: 전체 문제 또는 틀린 문제만 받아서 처음부터 진행
+    function beginRound(list) {
+        questions = list;
+        curIdx = 0;
+        correctFirst = 0;
+        missed = [];
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof quizData === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'quizData를 찾을 수 없습니다. const quizData = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 퀴즈 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '문제와 문제 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateQuizData(quizData);
+
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            startQuiz(result.valid);
+            return;
+        }
+
+        var items = result.errors.map(function (er) { return { tag: er.tag, text: er.text }; })
+            .concat(result.warnings.map(function (w) { return { tag: w.tag, text: w.text, warn: true }; }));
+
+        var badCount = (Array.isArray(quizData) ? quizData.length : 0) - result.valid.length;
+        var hasErrors = result.errors.length > 0;
+
+        showProblemScreen({
+            title: hasErrors ? '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요' : '확인해 볼 곳이 있어요',
+            summary: !hasErrors
+                ? '오류는 아니지만 한 번 확인해 보세요.'
+                : (badCount > 0
+                    ? '전체 ' + quizData.length + '문제 중 ' + badCount + '문제에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                    : '퀴즈 데이터를 확인하고 새로고침하세요.'),
+            items: items,
+            tips: hasErrors ? [
+                '정답 번호 a는 따옴표 없는 숫자이고, 첫 번째 보기가 0입니다',
+                '문제마다 type, q, o, a, h, e 가 모두 있어야 합니다'
+            ] : null,
+            buttonText: result.valid.length > 0
+                ? (hasErrors ? '오류 없는 ' + result.valid.length + '문제만 먼저 풀기' : '그대로 시작하기')
+                : null,
+            onButton: function () { startQuiz(result.valid); }
+        });
+    }
+
+    /* ---------- 퀴즈 진행 ---------- */
+    function loadQuestion() {
+        wrongCount = 0;
+        var q = questions[curIdx];
+
+        document.getElementById('progress-text').textContent = (curIdx + 1) + ' / ' + questions.length;
+        updateScore();
+        window.scrollTo(0, 0);
+        document.getElementById('question-type').textContent = q.type || '일반문제';
+        document.getElementById('question-text').textContent = 'Q' + (allQuestions.indexOf(q) + 1) + '. ' + q.q;
+
+        var container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.o.forEach(function (opt, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = function () { checkAnswer(idx, btn); };
+            container.appendChild(btn);
+        });
+
+        document.getElementById('hint-box').style.display = 'none';
+        document.getElementById('exp-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(idx, btn) {
+        var q = questions[curIdx];
+        var allBtns = document.querySelectorAll('.option-btn');
+
+        if (idx === q.a) {
+            btn.classList.add('correct');
+            allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+            if (wrongCount === 0) { correctFirst++; updateScore(); }
+            showExplanation();
+        } else {
+            wrongCount++;
+            if (wrongCount === 1) missed.push(q);
+            btn.classList.add('wrong');
+            btn.style.pointerEvents = 'none';
+
+            if (wrongCount === 1) {
+                document.getElementById('hint-text').textContent = q.h;
+                document.getElementById('hint-box').style.display = 'block';
+            } else {
+                allBtns[q.a].classList.add('correct');
+                allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+                showExplanation();
+            }
+        }
+    }
+
+    function showExplanation() {
+        var q = questions[curIdx];
+        document.getElementById('exp-text').textContent = q.e;
+        document.getElementById('exp-box').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // 풀던 중에 누르면 한 번 물어봅니다. (묻지 않으려면 if 문 세 줄을 지우세요)
+    function goList() {
+        if (curIdx > 0 && !confirm('퀴즈를 그만하고 목록으로 갈까요?\n지금까지 푼 기록은 저장되지 않아요.')) return;
+        location.href = 'index.html';
+    }
+
+    function nextQuestion() {
+        curIdx++;
+        if (curIdx < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    /* ---------- 점수와 다시 풀기 ---------- */
+    // 한 번에 맞힌 문제만 점수로 셉니다. (힌트를 본 뒤 맞히면 점수에 넣지 않아요)
+    function updateScore() {
+        document.getElementById('score-text').textContent = '한 번에 맞힌 문제 ' + correctFirst + '개';
+    }
+
+    function showResult() {
+        var total = questions.length;
+        var score = Math.round(correctFirst / total * 100);
+        var isRetry = total < allQuestions.length;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-title').textContent = isRetry ? '🔁 틀린 문제 복습을 마쳤습니다!' : '🎊 학습을 마쳤습니다!';
+        document.getElementById('result-score').textContent = score + '점';
+        document.getElementById('result-detail').textContent =
+            (isRetry ? '복습한 ' : '전체 ') + total + '문제 중 한 번에 맞힌 문제 ' + correctFirst + '개 (100점 만점)';
+
+        var msg;
+        if (score >= 90) msg = '진짜 수고 많이 하셨습니다, 학우님! A+ 당근 🥕';
+        else if (score >= 70) msg = '잘하고 계세요! 틀린 문제만 한 번 더 풀면 더 단단해져요.';
+        else msg = '괜찮아요. 틀린 문제를 해설과 함께 다시 풀어 보면 금방 늘어요.';
+        document.getElementById('result-msg').textContent = msg;
+
+        var details = document.getElementById('missed-details');
+        var list = document.getElementById('missed-list');
+        list.innerHTML = '';
+        missed.forEach(function (m) {
+            var li = document.createElement('li');
+            li.value = allQuestions.indexOf(m) + 1;
+            li.textContent = m.q;
+            list.appendChild(li);
+        });
+        details.open = false;
+        details.style.display = missed.length ? 'block' : 'none';
+        document.getElementById('missed-summary').textContent = '이번에 틀린 문제 ' + missed.length + '개 보기';
+
+        var retryBtn = document.getElementById('retry-missed-btn');
+        retryBtn.textContent = '❌ 틀린 문제만 다시 풀기 (' + missed.length + '문제)';
+        retryBtn.style.display = missed.length ? 'block' : 'none';
+
+        window.scrollTo(0, 0);
+    }
+
+    function retryAll() { beginRound(allQuestions); }
+    function retryMissed() { if (missed.length) beginRound(missed.slice()); }
+
+    init();
+</script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 플래시카드</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 눈이 편한 차분한 초록 계열 (index.html의 플래시카드 색과 맞춤) */
+    body {
+        font-family: 'Pretendard', sans-serif;
+        background: linear-gradient(135deg, #2f7d5b 0%, #1b4332 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .container { width: 100%; max-width: 850px; margin: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+    .header { text-align: center; color: white; margin-bottom: 20px; }
+    .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .header .sub { font-size: 1.05rem; font-weight: 600; opacity: 0.92; margin-bottom: 10px; word-break: keep-all; }
+    .header .count { font-size: 1.1rem; font-weight: 700; }
+    .progress { max-width: 340px; height: 6px; margin: 12px auto 0; background: rgba(255,255,255,0.25); border-radius: 3px; overflow: hidden; }
+    #bar { height: 100%; width: 0; background: white; border-radius: 3px; transition: width 0.3s; }
+
+    /* 카드 */
+    .stage { perspective: 1400px; margin: 12px 0; }
+    .card {
+        position: relative;
+        width: 100%;
+        height: min(460px, 60vh);
+        height: min(460px, 60dvh);
+        min-height: 320px;
+        cursor: pointer;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card:focus-visible { outline: 3px solid #fde68a; outline-offset: 4px; }
+
+    .side {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 26px 18px;
+        border-radius: 20px;
+        overflow-y: auto;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        word-break: keep-all;
+        white-space: pre-line;
+    }
+    .front { background: white; color: #1e293b; }
+    .back { background: #f0f7f2; color: #1b4332; transform: rotateY(180deg); }
+
+    .meta { display: flex; align-items: center; justify-content: space-between; min-height: 28px; white-space: normal; }
+    .chip { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; }
+    .chip-q { background: #f1f5f9; color: #475569; }
+    .chip-a { background: #cfe8d8; color: #1b4332; }
+    .stars { font-size: 0.95rem; font-weight: 800; color: #1f6b46; background: #e3f1e8; padding: 3px 10px; border-radius: 20px; display: none; }
+
+    /* 내용이 길어도 위쪽이 잘리지 않도록 margin:auto로 가운데 맞춤 */
+    .body { margin: auto; padding: 14px 0; text-align: center; font-size: 1.4rem; font-weight: 700; line-height: 1.55; }
+    .back .body { font-size: 1.55rem; font-weight: 800; }
+    .src { min-height: 1.2em; text-align: center; font-size: 0.85rem; color: #64748b; white-space: normal; }
+
+    .tip { text-align: center; color: rgba(255,255,255,0.85); font-size: 0.9rem; margin: 4px 0 14px; word-break: keep-all; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 12px; }
+    .btn { padding: 18px 10px; border: none; border-radius: 12px; background: white; color: #1f6b46; font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .btn:hover { background: #f1f5f9; transform: translateY(-2px); }
+    .btn:focus-visible { outline: 3px solid #fde68a; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid #dc3545; box-shadow: 0 10px 30px rgba(0,0,0,0.25); color: #1e293b; }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: #dc3545; }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: #2e7d5b; color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #1e293b; outline-offset: 2px; }
+
+    @media (max-width: 600px) {
+        body { padding: 14px; }
+        .header h1 { font-size: 1.6rem; }
+        .side { padding: 16px 18px 14px; }
+        .body { font-size: 1.2rem; }
+        .back .body { font-size: 1.3rem; }
+        .controls { grid-template-columns: 1fr 1fr; }
+        .controls .btn-list { grid-column: 1 / -1; }
+        .btn { padding: 16px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .card, #bar, .btn { transition: none; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="card-screen">
+        <div class="header">
+            <h1 id="page-title">플래시카드</h1>
+            <p class="sub" id="page-sub"></p>
+            <p class="count"><span id="current">1</span> / <span id="total">0</span></p>
+            <div class="progress"><div id="bar"></div></div>
+        </div>
+
+        <div class="stage">
+            <div class="card" id="flashcard" role="button" tabindex="0" aria-label="카드 뒤집기">
+                <div class="side front">
+                    <div class="meta"><span class="chip chip-q">질문</span><span class="stars" id="stars"></span></div>
+                    <div class="body" id="question"></div>
+                    <div class="src" id="source"></div>
+                </div>
+                <div class="side back">
+                    <div class="meta"><span class="chip chip-a">정답</span></div>
+                    <div class="body" id="answer"></div>
+                    <div class="src"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="tip">카드를 누르면 정답이 보여요. 화살표 키나 좌우로 밀어서 넘길 수 있어요.</p>
+
+        <div class="controls">
+            <button class="btn" type="button" onclick="prevCard()">이전</button>
+            <button class="btn" type="button" onclick="nextCard()">다음</button>
+            <button class="btn btn-list" type="button" onclick="location.href='index.html'">목록으로 돌아가기</button>
+        </div>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 14, title: "현안 및 쟁점분석" };
+</script>
+
+<!-- ③ 카드 데이터: 노트북LM이 만든 const cards = [...]; 를 통째로 덮어쓰세요.
+     아래 2장은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     카드마다 q(질문)와 a(정답)가 모두 있어야 합니다. -->
+<script>
+    const cards = [
+        {"q": "★★★ 다문화 가구의 정확한 법적·사회적 개념 및 국적 구성의 특징은? [워크북 p.157, 교재 p.343-344, 2025년 기말]",
+    "a": "귀화자, 결혼이민자, 다문화자녀 가구 및 내국인 배우자를 포함하므로 구성원 모두가 외국 국적일 필요는 없음"
+  },
+  {
+    "q": "★★★ 탈 코르셋(Anti-Corset) 운동의 개념과 운동의 본질적 목표는? [워크북 p.157, 교재 p.354-355, 2025년 기말]",
+    "a": "화장·성형·다이어트 등 강요된 사회적 외모 억압에 저항하여 개인의 주체적 선택권과 성평등을 확립하는 운동"
+  },
+  {
+    "q": "★★★ 결혼이주여성이 가정폭력을 당하면서도 신고를 못 하게 만드는 체류자격 종속 구조는? [워크북 p.158, 교재 p.341-342]",
+    "a": "체류자격(F-6) 연장 및 국적 취득 시 한국인 남편의 신원보증과 협조에 전적으로 의존해야 하기 때문"
+  },
+  {
+    "q": "★★★ 여성혐오(Misogyny)의 사회학적 본질적 정의는? [워크북 p.158, 교재 p.346]",
+    "a": "개인의 단순 정서적 호오를 넘어, 사회구조 속에서 여성을 열등하게 규정하고 통제하려는 태도 및 이념"
+  },
+  {
+    "q": "★★★ 여성혐오 언어가 사회적으로 확산되게 된 주요 원인 3가지는? [워크북 p.158-159, 교재 p.348-349]",
+    "a": "신자유주의 자원 경쟁의 상대적 박탈감, 성평등 확산에 대한 기득권 반발(백래시), 미디어의 혐오 경제 구조"
+  },
+  {
+    "q": "★★★ 이주 사유 및 목적에 따라 구분되는 이주여성의 4가지 주요 유형은? [교재 p.340, 워크북 p.150]",
+    "a": "결혼이주여성, 이주노동여성, 유학 및 연구 여성, 난민 여성"
+  },
+  {
+    "q": "★★★ 결혼이주여성이 한국인 배우자와의 혼인을 통해 취득하는 대표 비자는? [교재 p.340, 워크북 p.150]",
+    "a": "결혼이민비자 (F-6)"
+  },
+  {
+    "q": "★★★ 2000년대 이후 한국 사회가 다문화사회로 급전환하게 된 2대 결정적 계기는? [교재 p.340, 워크북 p.150]",
+    "a": "농촌 미혼 남성의 성비 불균형 및 결혼난 & 상업적 국제결혼 중개업의 급증"
+  },
+  {
+    "q": "★★★ 한국 전체 혼인 건수 중 '국제결혼'이 차지하는 비율 및 다문화 혼인 비중은? [교재 p.341, 워크북 p.150]",
+    "a": "전체 혼인의 약 7~8% (다문화 혼인 통계 비중은 10% 안팎)"
+  },
+  {
+    "q": "★★★ 한국 결혼이주여성의 주요 출신 국가지역 공통점은? [교재 p.341, 워크북 p.150-151]",
+    "a": "베트남, 중국(한국계 포함), 필리핀, 캄보디아 등 아시아 국가에 압도적으로 집중됨"
+  },
+  {
+    "q": "★★☆ 결혼이주여성의 한국 사회 정착 및 언어·자녀양육을 종합 지원하는 전담 기관은? [교재 p.341, 워크북 p.151]",
+    "a": "다문화가족지원센터 (현 시군구 가족센터)"
+  },
+  {
+    "q": "★★☆ 이주노동여성이 주로 취업하여 종사하는 노동시장의 환경적 특징은? [교재 p.342, 워크북 p.151]",
+    "a": "식당, 요양, 청소, 농축산, 제조업 등 비공식적·저임금·3D 취약 노동 부문에 집중됨"
+  },
+  {
+    "q": "★★☆ 이주여성이 마주하는 4대 주요 사회적 위험 이슈는? [교재 p.341-343, 워크북 p.151]",
+    "a": "① 가정폭력 및 체류 불안정, ② 비공식 노동과 착취, ③ 자녀 양육·교육 문제, ④ 문화적 고립과 낙인"
+  },
+  {
+    "q": "★★☆ 2023년 통계청 조사 기준 대한민국 전국 '다문화 가구 수' 통계 수치는? [교재 p.343, 워크북 p.151]",
+    "a": "약 41만 5,584 가구 (지속적 증가 추세)"
+  },
+  {
+    "q": "★★☆ 2023년 기준 다문화 가구 구성비 중 가장 높은 비중(43.1%)을 차지하는 가구 유형은? [교재 p.344, 워크북 p.151]",
+    "a": "귀화자 가구 (43.1%) - 결혼이민자 가구(37.0%)보다 높음"
+  },
+  {
+    "q": "★★☆ 저성장 및 경쟁 사회에서 사회적 약자를 향해 표출되는 상대적 박탈감의 기제는? [교재 p.345, 워크북 p.152]",
+    "a": "좌절감과 불만이 복지 수혜자로 인식되는 이주민·여성 등 약자를 향한 혐오 표현으로 왜곡 전가됨"
+  },
+  {
+    "q": "★★☆ 여성혐오 언어 유형 1: '된장녀', '김치녀' 등 여성의 소비를 사치로 비하하는 유형은? [교재 p.346, 워크북 p.152]",
+    "a": "소비 행태 비하형"
+  },
+  {
+    "q": "★★☆ 여성혐오 언어 유형 2: 어머니들을 '맘충'이라 몰인격화하여 비하하는 유형은? [교재 p.347, 워크북 p.152]",
+    "a": "모성 및 가정 역할 고정(비하)형"
+  },
+  {
+    "q": "★★☆ 여성혐오 언어 유형 3: 여성의 신체와 외모를 등급화하여 평가하는 유형은? [교재 p.347, 워크북 p.152]",
+    "a": "성적 대상화형"
+  },
+  {
+    "q": "★★☆ 여성혐오 언어 유형 4: 페미니즘 운동을 '페미OO', 'OO나치'로 낙인찍는 유형은? [교재 p.347, 워크북 p.152-153]",
+    "a": "사회참여 폄하형"
+  },
+  {
+    "q": "★★☆ 여성혐오 언어 유형 5: 익명 게시판에서 혐오를 '밈'이나 '짤'로 소비하는 유형은? [교재 p.347-348, 워크북 p.153]",
+    "a": "디지털 혐오문화형"
+  },
+  {
+    "q": "★★☆ 자극적 분노 콘텐츠가 조회수를 높여 수익으로 연결되는 현상을 뜻하는 용어는? [교재 p.348-349, 워크북 p.153]",
+    "a": "혐오 경제 (Economy of Hate) 및 조회수 경제"
+  },
+  {
+    "q": "★★☆ 성평등 정책 확산에 대해 기존 가부장적 기득권 집단이 반발·저항하는 현상은? [교재 p.349, 워크북 p.153]",
+    "a": "백래시 (Backlash / 반발 현상)"
+  },
+  {
+    "q": "★★☆ 청년 세대가 혐오 언어에 지속 노출될 때 발생하는 여성복지적 부작용은? [교재 p.350, 워크북 p.153]",
+    "a": "젠더 감수성이 저하되고 성차별적 구조를 자각 없이 정당한 것으로 내면화함"
+  },
+  {
+    "q": "★★☆ 여성복지 관점에서 혐오사회를 극복하기 위해 제시되는 4대 대응책은? [교재 p.350, 워크북 p.153]",
+    "a": "학교·직장 젠더 감수성 교육, 디지털 시민교육, 미디어 책임성 강화, 세대 간 대화 촉진"
+  },
+  {
+    "q": "★★☆ 소득, 자산, 신분 지위에 따라 타인을 비하하고 '개·돼지'라 멸시하는 차별은? [교재 p.351, 워크북 p.153]",
+    "a": "계급 차별 (Class Discrimination)"
+  },
+  {
+    "q": "★★☆ 나이를 이유로 특정 연령대에 편견을 씌우고 '꼰대', '젊꼰'이라 비하하는 차별은? [교재 p.351-352, 워크북 p.153]",
+    "a": "연령 차별 (Ageism)"
+  },
+  {
+    "q": "★★☆ 피부색, 국적, 출신 민족을 이유로 이주민을 배척하고 배제하는 차별은? [교재 p.352, 워크북 p.154]",
+    "a": "인종·민족 차별 (Racial Discrimination)"
+  },
+  {
+    "q": "★★☆ 사회적 혐오 증대의 '구조적·제도적 요인' 2가지는? [교재 p.352-353, 워크북 p.154]",
+    "a": "자본·권력의 특정 집단 독점 & 교차 차별 사각지대와 세습적 불평등 고착"
+  },
+  {
+    "q": "★★☆ 사회적 혐오 증대의 '문화적·사회적 요인' 2가지는? [교재 p.353, 워크북 p.154]",
+    "a": "특정 집단에 대한 내재적 선입견 & 타인과의 서열 비교·경쟁에 따른 상대적 박탈감"
+  },
+  {
+    "q": "★☆☆ AI 플랫폼이 혐오 콘텐츠만을 반복 추천하여 편견을 강화하는 기술적 위험은? [교재 p.354, 워크북 p.154]",
+    "a": "알고리즘 편향 (Algorithm Bias) 및 정보 갇힘 (에코 챔버) 현상"
+  },
+  {
+    "q": "★☆☆ 사회가 여성에게 강요하는 획일적 외모 기준과 성적 대상화를 상징하는 용어는? [교재 p.354-355, 워크북 p.155]",
+    "a": "코르셋 (Corset)"
+  },
+  {
+    "q": "★☆☆ 여성 직원의 용모 유지가 사적 취향이 아닌 강제된 무급 노동이 되는 현상은? [교재 p.355, 워크북 p.155]",
+    "a": "꾸밈 노동 (Adornment Labor)"
+  },
+  {
+    "q": "★☆☆ 탈코르셋 운동 영향으로 직장·학교 현장에서 나타난 대표적 긍정 변화 사례는? [교재 p.355, 워크북 p.155]",
+    "a": "여성 승무원 바지 유니폼 허용 & 여학생 바지 교복 및 편한 교복 도입 확산"
+  },
+  {
+    "q": "★☆☆ 사회복지학 관점에서 본 혐오 현상의 본질적 사회적 프레임은? [교재 p.356, 워크북 p.155]",
+    "a": "사회 구조 및 제도 실패의 책임을 여성, 이주민 등 소수자에게 돌리는 '희생양 프레임'"
+  },
+  {
+    "q": "★☆☆ 이주여성의 수 증가에 따라 요구되는 사회복지 패러다임의 핵심 변화는? [교재 p.343, 워크북 p.150]",
+    "a": "일시적 시혜 대상에서 탈피하여 사회의 정당한 구성원이자 권리 주체로 인정함"
+  },
+  {
+    "q": "★☆☆ 다문화가정 아동이 학교 현장에서 경험하는 대표적 위험 및 부적응 요인은? [교재 p.342, 워크북 p.151]",
+    "a": "언어 및 문화 차이로 인한 학업 이수 부담, 또래 집단에서의 차별과 사회적 낙인"
+  },
+  {
+    "q": "★☆☆ 가정폭력 피해 이주여성의 인권을 보호하기 위한 핵심 법개정 과제는? [교재 p.341-342, 워크북 p.151]",
+    "a": "체류자격 연장 시 배우자 신원보증 의무를 폐지하고 폭력 피해 시 독자적 체류자격 인정"
+  },
+  {
+    "q": "★☆☆ 미디어가 여성을 정형화·성적 대상화하여 노출할 때 발생하는 사회적 부작용은? [교재 p.349, 워크북 p.153]",
+    "a": "성별 고정관념을 수용자에게 내면화시키고 여성혐오와 성차별을 정당화함"
+  },
+  {
+    "q": "★☆☆ 신자유주의 무한 경쟁 속에서 적극적 평등 조치가 혐오로 연결되는 이유 기제는? [교재 p.349, 워크북 p.153]",
+    "a": "기회가 희소한 상황에서 약자 우대 조치를 자신의 기회를 뺏는 '역차별'로 잘못 오인하기 때문"
+  },
+  {
+    "q": "★☆☆ 혐오 극복을 위한 '디지털 시민교육'의 여성복지적 실천 목표는? [교재 p.350, 워크북 p.153]",
+    "a": "온라인 정보의 비판적 수용력을 키우고 혐오 문화를 성평등한 디지털 문화로 개선함"
+  },
+  {
+    "q": "★☆☆ 사회적 서열화와 타인과의 비교·경쟁 문화가 혐오를 부추기는 심리적 메커니즘은? [교재 p.353, 워크북 p.154]",
+    "a": "뒤처졌다는 상대적 박탈감을 해소하기 위해 자기보다 약한 소수자를 비하하고 배제함"
+  },
+  {
+    "q": "★☆☆ 샤넬코리아 조기 출근 화장 지시 사건이 고발했던 성차별 노동 실태는? [교재 p.355, 워크북 p.155]",
+    "a": "여성 근로자에게만 용모 정돈 준비 시간을 무급 노동으로 강제한 '꾸밈 노동' 차별"
+  },
+  {
+    "q": "★☆☆ 밈(meme)과 짤 형태의 디지털 혐오가 위험한 인과적 이유는? [교재 p.347-348, 워크북 p.153]",
+    "a": "차별과 혐오 표현을 가벼운 일상 유희로 위장시켜 문제의식 없이 확산시키기 때문"
+  },
+  {
+    "q": "★☆☆ 젠더, 인종, 계급이 복합적으로 얽혀 나타나는 불평등을 설명하는 개념은? [교재 p.352-353, 워크북 p.154]",
+    "a": "교차성 (Intersectionality)"
+  },
+  {
+    "q": "★☆☆ 농축산업 및 식당 이주노동여성이 겪는 주요 인권 및 노동권 침해 사례는? [교재 p.342, 워크북 p.151]",
+    "a": "최저임금 미지급, 열악한 숙소 환경, 산재 위험 노출, 사업장 변경 제한 및 성희롱 위험"
+  },
+  {
+    "q": "★☆☆ 탈코르셋 운동이 지향하는 '몸에 대한 주체성'의 의미는? [교재 p.355, 워크북 p.155]",
+    "a": "타인의 시선이나 사회적 규범에 얽매이지 않고 자신의 몸과 외모를 주체적으로 가꿀 권리"
+  },
+  {
+    "q": "★☆☆ 혐오사회를 극복하고 사회통합을 이루기 위한 핵심 가치는? [교재 p.350, p.356, 워크북 p.153]",
+    "a": "성별, 인종, 나이의 차이를 인정하고 연대하는 '젠더 감수성'과 '다양성 존중'"
+  },
+  {
+    "q": "★☆☆ 2023년 기준 다문화 가구 구성비 중 37.0%를 차지하는 가구 유형은? [교재 p.344, 워크북 p.151]",
+    "a": "결혼이민자 가구"
+  },
+  {
+    "q": "★☆☆ 제14장 '현안 및 쟁점 분석: 이주여성과 혐오 사회' 단원의 전체 최종 결론은? [교재 p.338-358, 워크북 p.150-159]",
+    "a": "이주여성의 다층적 취약성과 혐오 사회의 구조적 기제를 해체하고 젠더 감수성과 다양성 존중에 기반한 성평등 복지를 구축해야 함"}
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var deck = [];
+    var cur = 0;
+    var swapTimer = null;
+
+    document.title = '제' + LECTURE.no + '장 - ' + LECTURE.title;
+    document.getElementById('page-title').textContent = '제' + LECTURE.no + '장 플래시카드';
+    document.getElementById('page-sub').textContent = LECTURE.title;
+
+    var cardEl = document.getElementById('flashcard');
+
+    function reduceMotion() {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateCards(data) {
+        var errors = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'cards가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = (i + 1) + '번 카드';
+            var problems = [];
+            if (!item || typeof item !== 'object') {
+                problems.push('카드가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) problems.push('q(질문)가 없거나 비어 있습니다.');
+                if (typeof item.a !== 'string' || !item.a.trim()) problems.push('a(정답)가 없거나 비어 있습니다.');
+            }
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        return { errors: errors, valid: valid };
+    }
+
+    function showProblemScreen(opts) {
+        document.getElementById('card-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startDeck(list) {
+        deck = list;
+        cur = 0;
+        document.getElementById('problem-screen').style.display = 'none';
+        document.getElementById('card-screen').style.display = 'block';
+        render();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof cards === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'cards를 찾을 수 없습니다. const cards = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 카드 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '카드와 카드 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateCards(cards);
+
+        if (result.errors.length === 0) {
+            startDeck(result.valid);
+            return;
+        }
+
+        var total = Array.isArray(cards) ? cards.length : 0;
+        var badCount = total - result.valid.length;
+        showProblemScreen({
+            title: '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요',
+            summary: badCount > 0
+                ? '전체 ' + total + '장 중 ' + badCount + '장에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                : '카드 데이터를 확인하고 새로고침하세요.',
+            items: result.errors,
+            tips: ['카드마다 q(질문)와 a(정답)가 모두 있어야 하고, 둘 다 글자(따옴표로 감싼 문장)여야 합니다'],
+            buttonText: result.valid.length > 0 ? '오류 없는 ' + result.valid.length + '장만 먼저 보기' : null,
+            onButton: function () { startDeck(result.valid); }
+        });
+    }
+
+    /* ---------- 카드 표시 ---------- */
+    // 질문 앞의 ★(중요도)와 끝의 [출처]를 따로 떼어 작은 표식으로 보여줍니다.
+    function parseQuestion(raw) {
+        var text = raw.trim();
+        var stars = '';
+        var src = '';
+        var m = text.match(/^([★☆]{1,5})\s*/);
+        if (m) { stars = m[1]; text = text.slice(m[0].length); }
+        var s = text.match(/\s*\[([^\]]{1,40})\]\s*$/);
+        if (s) { src = s[1]; text = text.slice(0, s.index); }
+        if (!text.trim()) { text = raw.trim(); stars = ''; src = ''; }
+        return { stars: stars, src: src, text: text };
+    }
+
+    function render() {
+        var c = deck[cur];
+        var p = parseQuestion(c.q);
+
+        document.getElementById('question').textContent = p.text;
+        document.getElementById('answer').textContent = c.a.trim();
+        document.getElementById('source').textContent = p.src ? '출처: ' + p.src : '';
+
+        var starsEl = document.getElementById('stars');
+        if (p.stars) {
+            var filled = (p.stars.match(/★/g) || []).length;
+            starsEl.textContent = p.stars;
+            starsEl.setAttribute('aria-label', '중요도 ' + p.stars.length + '개 중 ' + filled + '개');
+            starsEl.style.display = 'inline-block';
+        } else {
+            starsEl.style.display = 'none';
+        }
+
+        document.getElementById('current').textContent = cur + 1;
+        document.getElementById('total').textContent = deck.length;
+        document.getElementById('bar').style.width = ((cur + 1) / deck.length * 100) + '%';
+    }
+
+    function flip() { cardEl.classList.toggle('flipped'); }
+
+    function go(delta) {
+        cur = (cur + delta + deck.length) % deck.length;
+        clearTimeout(swapTimer);
+        if (cardEl.classList.contains('flipped') && !reduceMotion()) {
+            // 먼저 카드를 앞면으로 돌리고, 옆면이 되어 안 보일 때 내용을 바꿔서 다음 정답이 미리 비치지 않게 함
+            cardEl.classList.remove('flipped');
+            swapTimer = setTimeout(render, 300);
+        } else {
+            cardEl.classList.remove('flipped');
+            render();
+        }
+    }
+    function nextCard() { go(1); }
+    function prevCard() { go(-1); }
+
+    cardEl.addEventListener('click', flip);
+
+    document.addEventListener('keydown', function (e) {
+        if (document.getElementById('card-screen').style.display === 'none') return;
+        if (e.key === 'ArrowRight') { nextCard(); }
+        else if (e.key === 'ArrowLeft') { prevCard(); }
+        else if ((e.key === ' ' || e.key === 'Enter') && e.target.tagName !== 'BUTTON') { e.preventDefault(); flip(); }
+    });
+
+    // 스마트폰: 좌우로 밀어서 넘기기
+    var touchX = null, touchY = null;
+    cardEl.addEventListener('touchstart', function (e) {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+    }, { passive: true });
+    cardEl.addEventListener('touchend', function (e) {
+        if (touchX === null) return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        var dy = e.changedTouches[0].clientY - touchY;
+        touchX = null;
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
+            if (dx < 0) nextCard(); else prevCard();
+        }
+    }, { passive: true });
+
+    init();
+</script>
+</body>
+</html>

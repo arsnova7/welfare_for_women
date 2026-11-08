@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 플래시카드</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 눈이 편한 차분한 초록 계열 (index.html의 플래시카드 색과 맞춤) */
+    body {
+        font-family: 'Pretendard', sans-serif;
+        background: linear-gradient(135deg, #2f7d5b 0%, #1b4332 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .container { width: 100%; max-width: 850px; margin: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+    .header { text-align: center; color: white; margin-bottom: 20px; }
+    .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .header .sub { font-size: 1.05rem; font-weight: 600; opacity: 0.92; margin-bottom: 10px; word-break: keep-all; }
+    .header .count { font-size: 1.1rem; font-weight: 700; }
+    .progress { max-width: 340px; height: 6px; margin: 12px auto 0; background: rgba(255,255,255,0.25); border-radius: 3px; overflow: hidden; }
+    #bar { height: 100%; width: 0; background: white; border-radius: 3px; transition: width 0.3s; }
+
+    /* 카드 */
+    .stage { perspective: 1400px; margin: 12px 0; }
+    .card {
+        position: relative;
+        width: 100%;
+        height: min(460px, 60vh);
+        height: min(460px, 60dvh);
+        min-height: 320px;
+        cursor: pointer;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card:focus-visible { outline: 3px solid #fde68a; outline-offset: 4px; }
+
+    .side {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 26px 18px;
+        border-radius: 20px;
+        overflow-y: auto;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        word-break: keep-all;
+        white-space: pre-line;
+    }
+    .front { background: white; color: #1e293b; }
+    .back { background: #f0f7f2; color: #1b4332; transform: rotateY(180deg); }
+
+    .meta { display: flex; align-items: center; justify-content: space-between; min-height: 28px; white-space: normal; }
+    .chip { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; }
+    .chip-q { background: #f1f5f9; color: #475569; }
+    .chip-a { background: #cfe8d8; color: #1b4332; }
+    .stars { font-size: 0.95rem; font-weight: 800; color: #1f6b46; background: #e3f1e8; padding: 3px 10px; border-radius: 20px; display: none; }
+
+    /* 내용이 길어도 위쪽이 잘리지 않도록 margin:auto로 가운데 맞춤 */
+    .body { margin: auto; padding: 14px 0; text-align: center; font-size: 1.4rem; font-weight: 700; line-height: 1.55; }
+    .back .body { font-size: 1.55rem; font-weight: 800; }
+    .src { min-height: 1.2em; text-align: center; font-size: 0.85rem; color: #64748b; white-space: normal; }
+
+    .tip { text-align: center; color: rgba(255,255,255,0.85); font-size: 0.9rem; margin: 4px 0 14px; word-break: keep-all; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 12px; }
+    .btn { padding: 18px 10px; border: none; border-radius: 12px; background: white; color: #1f6b46; font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .btn:hover { background: #f1f5f9; transform: translateY(-2px); }
+    .btn:focus-visible { outline: 3px solid #fde68a; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid #dc3545; box-shadow: 0 10px 30px rgba(0,0,0,0.25); color: #1e293b; }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: #dc3545; }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: #2e7d5b; color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #1e293b; outline-offset: 2px; }
+
+    @media (max-width: 600px) {
+        body { padding: 14px; }
+        .header h1 { font-size: 1.6rem; }
+        .side { padding: 16px 18px 14px; }
+        .body { font-size: 1.2rem; }
+        .back .body { font-size: 1.3rem; }
+        .controls { grid-template-columns: 1fr 1fr; }
+        .controls .btn-list { grid-column: 1 / -1; }
+        .btn { padding: 16px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .card, #bar, .btn { transition: none; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="card-screen">
+        <div class="header">
+            <h1 id="page-title">플래시카드</h1>
+            <p class="sub" id="page-sub"></p>
+            <p class="count"><span id="current">1</span> / <span id="total">0</span></p>
+            <div class="progress"><div id="bar"></div></div>
+        </div>
+
+        <div class="stage">
+            <div class="card" id="flashcard" role="button" tabindex="0" aria-label="카드 뒤집기">
+                <div class="side front">
+                    <div class="meta"><span class="chip chip-q">질문</span><span class="stars" id="stars"></span></div>
+                    <div class="body" id="question"></div>
+                    <div class="src" id="source"></div>
+                </div>
+                <div class="side back">
+                    <div class="meta"><span class="chip chip-a">정답</span></div>
+                    <div class="body" id="answer"></div>
+                    <div class="src"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="tip">카드를 누르면 정답이 보여요. 화살표 키나 좌우로 밀어서 넘길 수 있어요.</p>
+
+        <div class="controls">
+            <button class="btn" type="button" onclick="prevCard()">이전</button>
+            <button class="btn" type="button" onclick="nextCard()">다음</button>
+            <button class="btn btn-list" type="button" onclick="location.href='index.html'">목록으로 돌아가기</button>
+        </div>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 6, title: "노동시장의 변화와 여성 노동" };
+</script>
+
+<!-- ③ 카드 데이터: 노트북LM이 만든 const cards = [...]; 를 통째로 덮어쓰세요.
+     아래 2장은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     카드마다 q(질문)와 a(정답)가 모두 있어야 합니다. -->
+<script>
+    const cards = [
+        {"q": "★★★ 한국 여성 노동시장의 'M커브(M-Curve) 현상'이란 무엇인가? [워크북 p.75, 2025년 기말]",
+    "a": "20대 후반 정점 후 30대 전후 임신·출산·육아로 경력이 단절되었다가 자녀 양육 후 재취업하는 곡선 모형"
+  },
+  {
+    "q": "★★★ 디지털 전환과 돌봄 기술(AI·원격 모니터링) 도입이 갖는 양면성은? [워크북 p.75, 2025년 기말]",
+    "a": "돌봄 부담 경감의 긍정성과 정서노동 가시성 약화 및 공적 책임의 개인 전가라는 부정성이 공존함"
+  },
+  {
+    "q": "★★★ 디지털 노동 시장에서 성인지적 정책이 반드시 필요한 이유는? [워크북 p.75, 2025년 기말]",
+    "a": "기술 진보가 저절로 성평등을 가져오지 않으며, 방치 시 알고리즘 편향과 STEM 배제가 심화되기 때문"
+  },
+  {
+    "q": "★★★ 디지털 기술 발전 및 인공지능 확산 시 여성 노동자가 마주하는 위험은? [워크북 p.76]",
+    "a": "여성 종사 비중이 높은 단순 사무, 행정 보조, 고객 상담 직무의 빠른 AI 자동화 대체 및 실직 위험"
+  },
+  {
+    "q": "★★★ 기술 진보에 따른 '임금 프리미엄(Wage Premium)'의 성별 차이는? [워크북 p.76-77]",
+    "a": "직무 전환 시 남성(44%)이 여성(30%)보다 더 높은 임금 인상 혜택을 받는 성별 격차가 존재함"
+  },
+  {
+    "q": "★★★ 대한민국 「근로기준법」 제6조가 규정하는 균등 처우 원칙은? [교재 p.86, 워크북 p.68]",
+    "a": "사용자는 근로자에 대하여 남녀의 성(性)을 이유로 차별적 대우를 하지 못함"
+  },
+  {
+    "q": "★★★ 조직 내 여성이 능력에도 불구하고 고위직으로 승진하는 것을 막는 장벽은? [교재 p.86, 워크북 p.68]",
+    "a": "유리천장 (Glass Ceiling)"
+  },
+  {
+    "q": "★★★ 여성 리더가 실패 확률이 높은 위기 상황이나 불안정한 직위에 배치되는 현상은? [교재 p.86, 워크북 p.68]",
+    "a": "유리절벽 (Glass Cliff)"
+  },
+  {
+    "q": "★★★ 초등교사·간호사 등 여성 다수 직종에 진입한 남성이 초고속 승진하는 현상은? [교재 p.86, 워크북 p.68]",
+    "a": "유리 에스컬레이터 (Glass Escalator)"
+  },
+  {
+    "q": "★★★ 2000년 대비 2024년 한국 성별 고용률 수치 변화는? [교재 p.86-87, 워크북 p.68]",
+    "a": "여성 고용률 47.0% → 54.7% 상승 (남성은 70.9% 유지, 격차 24%p에서 16%p로 축소)"
+  },
+  {
+    "q": "★★☆ OECD 주요국 중 스웨덴·독일의 여성 고용률(15~64세) 수준은? [교재 p.87, 워크북 p.69]",
+    "a": "70%를 상회하는 높은 고용률 유지 (한국은 62.1%로 상승 추세)"
+  },
+  {
+    "q": "★★☆ 최근 한국 여성 경제활동 참가율 그래프에서 나타난 구조적 변화는? [교재 p.87-88, 워크북 p.69]",
+    "a": "30대 여성의 경력유지 증가로 M자형 파임 현상이 점차 완화되며 완만한 곡선으로 변화함"
+  },
+  {
+    "q": "★★☆ 2024년 기준 비경제활동 인구의 일하지 않는 사유 1위 성별 비교는? [교재 p.88-89, 워크북 p.69]",
+    "a": "여성은 '가사(57.4%)'가 압도적 1위인 반면, 남성은 '기타(38.5%)' 및 '통학(28.2%)' 중심임"
+  },
+  {
+    "q": "★★☆ 2000년 대비 2024년 여성 비경제활동 사유 중 가사와 육아 비율의 변화는? [교재 p.88-89, 워크북 p.69]",
+    "a": "저출생 영향으로 '육아'는 18.5% → 7.2% 감소, 돌봄 통합으로 '가사'는 48.3% → 57.4% 증가"
+  },
+  {
+    "q": "★★☆ 남성 비경제활동 인구 중 육아(0.1~0.2%)와 가사(3.5%) 응답이 미미한 시사점은? [교재 p.89, 워크북 p.69]",
+    "a": "가정 내 돌봄과 가사 노동이 여전히 여성에게 집중되는 공고한 성별분업 구조를 증명함"
+  },
+  {
+    "q": "★★☆ 1963년 대비 2024년 여성 취업자의 종사상 지위 2대 핵심 변화는? [교재 p.89-90, 워크북 p.69]",
+    "a": "무급가족종사자 비율 급감(56.0% → 5.9%) 및 정규직 상용근로자 비율 급증(20.0% → 55.1%)"
+  },
+  {
+    "q": "★★☆ 2024년 여성 취업자가 남성에 비해 여전히 높게 유지하는 불안정 고용 형태는? [교재 p.90, 워크북 p.69]",
+    "a": "계약 기간이 짧고 고용 불안정이 높은 '임시근로자' 비중"
+  },
+  {
+    "q": "★★☆ 2024년 취업자의 성별 직업 유형 1위 분포는? [교재 p.90-91, 워크북 p.69-70]",
+    "a": "남성: 기능·기계조작·단순노무(41.6%), 여성: 서비스·판매 종사자(29.4%) 및 사무직(20.9%)"
+  },
+  {
+    "q": "★★☆ 2024년 여성 취업자의 절반 이상(51.7%)이 집중된 산업군은? [교재 p.91, 워크북 p.70]",
+    "a": "사업·개인·공공서비스 및 기타 부문 (교육, 보건복지, 개인서비스 등)"
+  },
+  {
+    "q": "★★☆ 2006년 대비 2024년 성별 월임금총액 및 절대 임금 격차 추이는? [교재 p.91-92, 워크북 p.70]",
+    "a": "남성 439.8만 원 vs 여성 285.1만 원으로, 절대 임금 격차가 103.8만 원에서 154.7만 원으로 확대됨"
+  },
+  {
+    "q": "★★☆ 2025년 8월 인천에서 개최된 APEC 여성 경제 회의의 주 의제는? [교재 p.92]",
+    "a": "디지털 전환과 돌봄 경제에서의 성별 임금격차 해소를 위한 공동 대책 모색"
+  },
+  {
+    "q": "★★☆ 단순 전산화를 넘어 조직·사회 전체를 AI와 빅데이터 기반으로 재편하는 과정은? [교재 p.92-93, 워크북 p.70]",
+    "a": "디지털 전환 (Digital Transformation)"
+  },
+  {
+    "q": "★★☆ 디지털 전환이 여성의 일·돌봄 병행에 제공하는 긍정적 기회 요소는? [교재 p.93, 워크북 p.71]",
+    "a": "재택·원격근무 등 시공간 제약이 완화된 유연한 근로 형태를 통한 경력 유지 가능성"
+  },
+  {
+    "q": "★★☆ 돌봄의 공적 분담 없는 유연근무 확산이 여성에게 가져오는 부작용은? [교재 p.93, 워크북 p.71]",
+    "a": "일터와 가정의 경계가 모호해지면서 집에 거주하는 여성에게 돌봄 이중 부담이 가중됨"
+  },
+  {
+    "q": "★★☆ 과거의 편향된 데이터를 AI가 학습하여 여성에게 불리한 평가를 내리는 현상은? [교재 p.94, 워크북 p.71]",
+    "a": "알고리즘 성차별 (Algorithm Bias)"
+  },
+  {
+    "q": "★★☆ 여성의 진입 장벽이 여전히 높은 미래 핵심 전문 직군 STEM의 4대 분야는? [교재 p.94, 워크북 p.71]",
+    "a": "Science(과학), Technology(기술), Engineering(공학), Mathematics(수학)"
+  },
+  {
+    "q": "★★☆ 플랫폼 앱을 통해 임시·초단기로 일거리를 수주받아 수행하는 노동 형태는? [교재 p.94, 워크북 p.71]",
+    "a": "긱(Gig) 노동"
+  },
+  {
+    "q": "★★☆ WEF(2025) 미래 직업 보고서가 전망한 2025~2030년 세계 일자리 수치 변화는? [교재 p.95, 워크북 p.71]",
+    "a": "전체 일자리 22% 재편 (1억 7천만 개 창출, 9천 2백만 개 감소로 7,800만 개 순증)"
+  },
+  {
+    "q": "★★☆ WEF(2025) 보고서 기준 2025~2030년 가장 급성장할 2대 직무 분야는? [교재 p.95-96, 워크북 p.71-72]",
+    "a": "기술 관련 직무(AI, 빅데이터, 핀테크) 및 그린·에너지 전환 직무(전기차, 재생에너지)"
+  },
+  {
+    "q": "★★☆ WEF(2025) 보고서 기준 2025~2030년 가장 크게 감소할 직무는? [교재 p.96, 워크북 p.72]",
+    "a": "우편원, 은행 창구원, 데이터 입력원, 임원 비서 등 단순 사무 및 비서직"
+  },
+  {
+    "q": "★☆☆ WEF(2025)의 2030년 인간-기계 업무 수행 비율 전망은? [교재 p.96-97, 워크북 p.72]",
+    "a": "인간 수행 33%, 디지털 기술 전담 34%, 인간+기술 결합형(Combination) 33%"
+  },
+  {
+    "q": "★☆☆ 기술 전환 시 직무 전환 단계별 임금 프리미엄 성별 경험률 차이는? [교재 p.97, 워크북 p.72]",
+    "a": "남성 평균 44%, 여성 평균 30% (남성이 14%p 높음)"
+  },
+  {
+    "q": "★☆☆ 고난도 기술 전문직 직무 전환 시 성별 임금 인상률 격차 수치는? [교재 p.98, 워크북 p.72]",
+    "a": "남성 44% 인상 vs 여성 15% 인상 (약 3배 차이)"
+  },
+  {
+    "q": "★☆☆ 고난도 기술 전문직 전환 시 남성이 높은 임금 프리미엄을 받는 구조적 원인은? [교재 p.97-98, 워크북 p.72]",
+    "a": "기술 역량 축적 기회, 조직 승진, 인사 평가 체계가 남성 기득권 중심으로 구조화되어 있기 때문"
+  },
+  {
+    "q": "★☆☆ 디지털 플랫폼(SNS, 커머스 등) 환경이 여성 노동자에게 제공하는 긍정면은? [교재 p.98, 워크북 p.73]",
+    "a": "오프라인 가부장적 성차별 장벽을 벗어나 성과 중심으로 1인 창업 및 크리에이터로 활동할 기회"
+  },
+  {
+    "q": "★☆☆ IT 기술 및 디지털 리터러시가 부족한 취약계층 여성이 마주하는 위험은? [교재 p.98, 워크북 p.73]",
+    "a": "정보 격차(Digital Divide)로 인한 노동시장 이중 배제 및 소외"
+  },
+  {
+    "q": "★☆☆ 디지털 사회에서 여성의 노동권 확립을 위한 2대 핵심 교육·정책 과제는? [교재 p.99, 워크북 p.73]",
+    "a": "성인지적 디지털 정책 수립 및 여성의 디지털 리터러시와 STEM 교육 대폭 강화"
+  },
+  {
+    "q": "★☆☆ 전통적 노동시장에서 여성이 마주해 온 4대 구조적 장벽은? [교재 p.99, 워크북 p.73]",
+    "a": "M자형 경력단절, 유리천장, 성별 직종 분리, 성별 임금 격차"
+  },
+  {
+    "q": "★☆☆ 일자리 수의 단순 양적 증가가 여성 노동 문제의 해법이 될 수 없는 이유는? [교재 p.99, 워크북 p.73]",
+    "a": "단시간 저임금 비정규직 확산은 불안정성만 높이므로 일의 질(Quality)과 돌봄 가치 보장이 수반되어야 함"
+  },
+  {
+    "q": "★☆☆ 미래 여성 노동 정책이 돌봄과 정서 노동 가치를 재정립해야 하는 이유는? [교재 p.99, 워크북 p.73]",
+    "a": "과거 저평가받던 돌봄·협력 노동의 사회적 가치를 가시화하고 성평등한 시간 권리를 보장하기 위해"
+  },
+  {
+    "q": "★☆☆ 과거 1980년대 존재하던 '25세 조기정년제'의 법적 평가 결과는? [교재 p.86, 워크북 p.68]",
+    "a": "여성에 대한 명백한 성차별 판결(여성 전화교환원 판례 등)을 통해 무효화·폐지됨"
+  },
+  {
+    "q": "★☆☆ 취업자 중 여성이 보건복지·공공서비스(51.7%)에 과반 집중되는 현상의 용어는? [교재 p.91, 워크북 p.70]",
+    "a": "산업 구조상의 성별 직종/분업적 분리"
+  },
+  {
+    "q": "★☆☆ M자형 곡선이 완만해지고 파임이 메워지는 현상이 나타내는 성평등적 의미는? [교재 p.88, 워크북 p.69]",
+    "a": "30대 여성의 출산·육아기 일자리 유지 및 경력 지속성이 과거보다 향상됨을 의미함"
+  },
+  {
+    "q": "★☆☆ 긱(Gig) 노동이 지니는 유연성의 장점 뒤에 숨은 제도적 한계는? [교재 p.94, 워크북 p.71]",
+    "a": "독립 계약자 형태로서 4대 사회보험 사각지대와 고용 불안정성을 초래함"
+  },
+  {
+    "q": "★☆☆ AI 알고리즘 채용 성차별이 발생하는 기술적 배경은? [교재 p.94, 워크북 p.71]",
+    "a": "과거 남성 중심 인사 채용 및 승진 데이터 패턴을 AI가 그대로 학습·재현하기 때문"
+  },
+  {
+    "q": "★☆☆ 15~64세 OECD 기준 한국 여성 고용률(2024년 62.1%)의 변화 방향은? [교재 p.87, 워크북 p.69]",
+    "a": "2000년 50.1%에서 지속적으로 상승하여 OECD 평균 수치에 점차 근접하고 있음"
+  },
+  {
+    "q": "★☆☆ 남성 취업자가 주로 집중되어 있는 직업 유형 1위(41.6%) 항목은? [교재 p.90-91, 워크북 p.69-70]",
+    "a": "기능·기계조작·단순노무직"
+  },
+  {
+    "q": "★☆☆ APEC 회원국들이 2025년 채택한 공동 성명의 주요 핵심 방향은? [교재 p.92]",
+    "a": "디지털 및 돌봄 경제 영역에서의 여성 참여 확대 및 성별 임금격차 축소"
+  },
+  {
+    "q": "★☆☆ 돌봄 기계화에 따라 국가의 공적 돌봄 책임이 후퇴할 위험의 대안은? [교재 p.95, 워크북 p.71]",
+    "a": "기술 도입과 병행하여 공적 돌봄 체계를 강화하고 돌봄 노동자의 정서적 가치를 인정함"
+  },
+  {
+    "q": "★☆☆ 제6장 '노동시장의 변화와 여성 노동' 단원의 최종 핵심 메시지는? [교재 p.85-113, 워크북 p.68-77]",
+    "a": "기존의 유리천장·임금격차 해소와 더불어, 디지털 전환기 성인지 정책 및 STEM 교육을 통해 양질의 여성 노동권을 보장해야 함"
+  }
+];
+</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var deck = [];
+    var cur = 0;
+    var swapTimer = null;
+
+    document.title = '제' + LECTURE.no + '장 - ' + LECTURE.title;
+    document.getElementById('page-title').textContent = '제' + LECTURE.no + '장 플래시카드';
+    document.getElementById('page-sub').textContent = LECTURE.title;
+
+    var cardEl = document.getElementById('flashcard');
+
+    function reduceMotion() {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateCards(data) {
+        var errors = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'cards가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = (i + 1) + '번 카드';
+            var problems = [];
+            if (!item || typeof item !== 'object') {
+                problems.push('카드가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) problems.push('q(질문)가 없거나 비어 있습니다.');
+                if (typeof item.a !== 'string' || !item.a.trim()) problems.push('a(정답)가 없거나 비어 있습니다.');
+            }
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        return { errors: errors, valid: valid };
+    }
+
+    function showProblemScreen(opts) {
+        document.getElementById('card-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startDeck(list) {
+        deck = list;
+        cur = 0;
+        document.getElementById('problem-screen').style.display = 'none';
+        document.getElementById('card-screen').style.display = 'block';
+        render();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof cards === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'cards를 찾을 수 없습니다. const cards = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 카드 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '카드와 카드 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateCards(cards);
+
+        if (result.errors.length === 0) {
+            startDeck(result.valid);
+            return;
+        }
+
+        var total = Array.isArray(cards) ? cards.length : 0;
+        var badCount = total - result.valid.length;
+        showProblemScreen({
+            title: '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요',
+            summary: badCount > 0
+                ? '전체 ' + total + '장 중 ' + badCount + '장에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                : '카드 데이터를 확인하고 새로고침하세요.',
+            items: result.errors,
+            tips: ['카드마다 q(질문)와 a(정답)가 모두 있어야 하고, 둘 다 글자(따옴표로 감싼 문장)여야 합니다'],
+            buttonText: result.valid.length > 0 ? '오류 없는 ' + result.valid.length + '장만 먼저 보기' : null,
+            onButton: function () { startDeck(result.valid); }
+        });
+    }
+
+    /* ---------- 카드 표시 ---------- */
+    // 질문 앞의 ★(중요도)와 끝의 [출처]를 따로 떼어 작은 표식으로 보여줍니다.
+    function parseQuestion(raw) {
+        var text = raw.trim();
+        var stars = '';
+        var src = '';
+        var m = text.match(/^([★☆]{1,5})\s*/);
+        if (m) { stars = m[1]; text = text.slice(m[0].length); }
+        var s = text.match(/\s*\[([^\]]{1,40})\]\s*$/);
+        if (s) { src = s[1]; text = text.slice(0, s.index); }
+        if (!text.trim()) { text = raw.trim(); stars = ''; src = ''; }
+        return { stars: stars, src: src, text: text };
+    }
+
+    function render() {
+        var c = deck[cur];
+        var p = parseQuestion(c.q);
+
+        document.getElementById('question').textContent = p.text;
+        document.getElementById('answer').textContent = c.a.trim();
+        document.getElementById('source').textContent = p.src ? '출처: ' + p.src : '';
+
+        var starsEl = document.getElementById('stars');
+        if (p.stars) {
+            var filled = (p.stars.match(/★/g) || []).length;
+            starsEl.textContent = p.stars;
+            starsEl.setAttribute('aria-label', '중요도 ' + p.stars.length + '개 중 ' + filled + '개');
+            starsEl.style.display = 'inline-block';
+        } else {
+            starsEl.style.display = 'none';
+        }
+
+        document.getElementById('current').textContent = cur + 1;
+        document.getElementById('total').textContent = deck.length;
+        document.getElementById('bar').style.width = ((cur + 1) / deck.length * 100) + '%';
+    }
+
+    function flip() { cardEl.classList.toggle('flipped'); }
+
+    function go(delta) {
+        cur = (cur + delta + deck.length) % deck.length;
+        clearTimeout(swapTimer);
+        if (cardEl.classList.contains('flipped') && !reduceMotion()) {
+            // 먼저 카드를 앞면으로 돌리고, 옆면이 되어 안 보일 때 내용을 바꿔서 다음 정답이 미리 비치지 않게 함
+            cardEl.classList.remove('flipped');
+            swapTimer = setTimeout(render, 300);
+        } else {
+            cardEl.classList.remove('flipped');
+            render();
+        }
+    }
+    function nextCard() { go(1); }
+    function prevCard() { go(-1); }
+
+    cardEl.addEventListener('click', flip);
+
+    document.addEventListener('keydown', function (e) {
+        if (document.getElementById('card-screen').style.display === 'none') return;
+        if (e.key === 'ArrowRight') { nextCard(); }
+        else if (e.key === 'ArrowLeft') { prevCard(); }
+        else if ((e.key === ' ' || e.key === 'Enter') && e.target.tagName !== 'BUTTON') { e.preventDefault(); flip(); }
+    });
+
+    // 스마트폰: 좌우로 밀어서 넘기기
+    var touchX = null, touchY = null;
+    cardEl.addEventListener('touchstart', function (e) {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+    }, { passive: true });
+    cardEl.addEventListener('touchend', function (e) {
+        if (touchX === null) return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        var dy = e.changedTouches[0].clientY - touchY;
+        touchX = null;
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
+            if (dx < 0) nextCard(); else prevCard();
+        }
+    }, { passive: true });
+
+    init();
+</script>
+</body>
+</html>

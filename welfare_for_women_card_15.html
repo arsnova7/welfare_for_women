@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 플래시카드</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 눈이 편한 차분한 초록 계열 (index.html의 플래시카드 색과 맞춤) */
+    body {
+        font-family: 'Pretendard', sans-serif;
+        background: linear-gradient(135deg, #2f7d5b 0%, #1b4332 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .container { width: 100%; max-width: 850px; margin: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+    .header { text-align: center; color: white; margin-bottom: 20px; }
+    .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .header .sub { font-size: 1.05rem; font-weight: 600; opacity: 0.92; margin-bottom: 10px; word-break: keep-all; }
+    .header .count { font-size: 1.1rem; font-weight: 700; }
+    .progress { max-width: 340px; height: 6px; margin: 12px auto 0; background: rgba(255,255,255,0.25); border-radius: 3px; overflow: hidden; }
+    #bar { height: 100%; width: 0; background: white; border-radius: 3px; transition: width 0.3s; }
+
+    /* 카드 */
+    .stage { perspective: 1400px; margin: 12px 0; }
+    .card {
+        position: relative;
+        width: 100%;
+        height: min(460px, 60vh);
+        height: min(460px, 60dvh);
+        min-height: 320px;
+        cursor: pointer;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card:focus-visible { outline: 3px solid #fde68a; outline-offset: 4px; }
+
+    .side {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 26px 18px;
+        border-radius: 20px;
+        overflow-y: auto;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        word-break: keep-all;
+        white-space: pre-line;
+    }
+    .front { background: white; color: #1e293b; }
+    .back { background: #f0f7f2; color: #1b4332; transform: rotateY(180deg); }
+
+    .meta { display: flex; align-items: center; justify-content: space-between; min-height: 28px; white-space: normal; }
+    .chip { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; }
+    .chip-q { background: #f1f5f9; color: #475569; }
+    .chip-a { background: #cfe8d8; color: #1b4332; }
+    .stars { font-size: 0.95rem; font-weight: 800; color: #1f6b46; background: #e3f1e8; padding: 3px 10px; border-radius: 20px; display: none; }
+
+    /* 내용이 길어도 위쪽이 잘리지 않도록 margin:auto로 가운데 맞춤 */
+    .body { margin: auto; padding: 14px 0; text-align: center; font-size: 1.4rem; font-weight: 700; line-height: 1.55; }
+    .back .body { font-size: 1.55rem; font-weight: 800; }
+    .src { min-height: 1.2em; text-align: center; font-size: 0.85rem; color: #64748b; white-space: normal; }
+
+    .tip { text-align: center; color: rgba(255,255,255,0.85); font-size: 0.9rem; margin: 4px 0 14px; word-break: keep-all; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 12px; }
+    .btn { padding: 18px 10px; border: none; border-radius: 12px; background: white; color: #1f6b46; font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .btn:hover { background: #f1f5f9; transform: translateY(-2px); }
+    .btn:focus-visible { outline: 3px solid #fde68a; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid #dc3545; box-shadow: 0 10px 30px rgba(0,0,0,0.25); color: #1e293b; }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: #dc3545; }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: #2e7d5b; color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #1e293b; outline-offset: 2px; }
+
+    @media (max-width: 600px) {
+        body { padding: 14px; }
+        .header h1 { font-size: 1.6rem; }
+        .side { padding: 16px 18px 14px; }
+        .body { font-size: 1.2rem; }
+        .back .body { font-size: 1.3rem; }
+        .controls { grid-template-columns: 1fr 1fr; }
+        .controls .btn-list { grid-column: 1 / -1; }
+        .btn { padding: 16px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .card, #bar, .btn { transition: none; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="card-screen">
+        <div class="header">
+            <h1 id="page-title">플래시카드</h1>
+            <p class="sub" id="page-sub"></p>
+            <p class="count"><span id="current">1</span> / <span id="total">0</span></p>
+            <div class="progress"><div id="bar"></div></div>
+        </div>
+
+        <div class="stage">
+            <div class="card" id="flashcard" role="button" tabindex="0" aria-label="카드 뒤집기">
+                <div class="side front">
+                    <div class="meta"><span class="chip chip-q">질문</span><span class="stars" id="stars"></span></div>
+                    <div class="body" id="question"></div>
+                    <div class="src" id="source"></div>
+                </div>
+                <div class="side back">
+                    <div class="meta"><span class="chip chip-a">정답</span></div>
+                    <div class="body" id="answer"></div>
+                    <div class="src"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="tip">카드를 누르면 정답이 보여요. 화살표 키나 좌우로 밀어서 넘길 수 있어요.</p>
+
+        <div class="controls">
+            <button class="btn" type="button" onclick="prevCard()">이전</button>
+            <button class="btn" type="button" onclick="nextCard()">다음</button>
+            <button class="btn btn-list" type="button" onclick="location.href='index.html'">목록으로 돌아가기</button>
+        </div>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 15, title: "여성복지의 전망과 과제" };
+</script>
+
+<!-- ③ 카드 데이터: 노트북LM이 만든 const cards = [...]; 를 통째로 덮어쓰세요.
+     아래 2장은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     카드마다 q(질문)와 a(정답)가 모두 있어야 합니다. -->
+<script>
+    const cards = [
+        {"q": "★★★ 한국 여성복지 역사적 발전 패러다임의 주요 전환 과정은? [워크북 p.133, 교재 p.336-337, 2025년 기말]",
+    "a": "1950~70년대(보호·구제 중심, 요보호 대상자) -> 1980~90년대(제도화 기틀, 여성발전기본법) -> 2000년대 이후(개인의 권리와 성평등 중심)"
+  },
+  {
+    "q": "★★★ 미래 여성복지가 지향해야 할 7가지 바람직한 발전 방향은? [워크북 p.134, 교재 p.343-347, 2025년 기말]",
+    "a": "① 가족 다양성 존중, ② 성인지적 사회보장, ③ 실질적 평등 보장, ④ 여성 인권 증진, ⑤ 생애과정 적합 복지, ⑥ 성주류화 기구 강화, ⑦ 교차성 관점 강화"
+  },
+  {
+    "q": "★★★ 현행 한국 여성복지정책의 4대 주요 한계점은? [워크북 p.134, 교재 p.340-341]",
+    "a": "① 잔여주의적·소극적 시각, ② 남성 주도적 정책 수립 구조, ③ 법률 간 일관성 결여, ④ 부처 간 정책 추진의 불균형"
+  },
+  {
+    "q": "★★★ '펜스 룰(Pence Rule)'의 개념 및 사회학적·성차별적 비판점은? [워크북 p.135, 교재 p.342]",
+    "a": "남성이 여성과의 사적 접촉을 배제하는 수칙 / 여성을 직장 내 비공식 네트워킹과 멘토링에서 배제하여 승진 및 경력 개발 차별을 강하게 낳음"
+  },
+  {
+    "q": "★★★ 여성복지 수행의 4대 기본 원칙과 핵심 정의는? [워크북 p.135, 교재 p.338-339]",
+    "a": "평등성(지역·계층 차별 금지), 전문성(다학제 전문가 전담), 통합성(다차원 욕구 포괄 연계), 지속성(회복 시까지 단절 없는 장기 서비스)"
+  },
+  {
+    "q": "★★★ 1950~1970년대 초기 한국 여성복지의 주요 관점 및 대상 범위는? [교재 p.336, 워크북 p.123]",
+    "a": "미혼모, 빈곤 여성, 성매매 피해 여성 등 '요보호 대상자' 중심의 사후 구제 및 사회복지의 부차적 영역에 한정됨"
+  },
+  {
+    "q": "★★★ 1980~1990년대 국가 차원 여성정책의 제도적 기틀을 마련한 핵심 법률 2가지는? [교재 p.337, 워크북 p.123-124]",
+    "a": "1987년 「남녀고용평등법」 제정 & 1995년 「여성발전기본법」 제정"
+  },
+  {
+    "q": "★★★ 2000년대 이후 한국 여성복지 패러다임 전환을 나타내는 대표적 2대 사건은? [교재 p.337, 워크북 p.124]",
+    "a": "2001년 '여성부' 공식 출범 & 2005년 가부장적 신분 제도인 '호주제' 법적 폐지"
+  },
+  {
+    "q": "★★★ 2005년 '호주제 폐지'가 여성복지 패러다임에 가져온 결정적 역사적 의의는? [교재 p.337, 워크북 p.124]",
+    "a": "여성복지의 본질적 기준이 기존 '가족 단위의 수동적 보호'에서 '개인 단위의 독자적 권리와 평등'으로 전환됨"
+  },
+  {
+    "q": "★★★ 여성복지 수행 원리 중 '평등성의 원칙'의 구체적 적용 대상은? [교재 p.338, 워크북 p.124-125]",
+    "a": "남녀 간 서비스 평등뿐만 아니라, 수도권 대 지방 등 거주 지역이나 계층에 따른 여성 내부의 서비스 격차 배제"
+  },
+  {
+    "q": "★★☆ 정신건강 복합 위기를 겪는 여성에게 사회복지사, 정신과 의사, 치료사가 다학제적 개입을 하는 원리는? [교재 p.338, 워크북 p.125]",
+    "a": "전문성의 원칙 (고도의 복잡한 인간 문제 대응을 위해 전문가가 핵심 업무를 전담함)"
+  },
+  {
+    "q": "★★☆ 저소득 한부모 여성에게 생계비, 보육, 주거, 법률, 취업을 유기적으로 패키지 제공하는 원리는? [교재 p.338-339, 워크북 p.125]",
+    "a": "통합성의 원칙 (요보호 여성이 겪는 복합적 욕구를 묶어서 포괄 지원함)"
+  },
+  {
+    "q": "★★☆ 성폭력 피해 여성의 트라우마가 완전 회복될 때까지 단절 없이 서비스를 제공해야 하는 원리는? [교재 p.339, 워크북 p.125-126]",
+    "a": "지속성의 원칙 (개입 시점부터 문제 해결 시까지 연속성을 유지함)"
+  },
+  {
+    "q": "★★☆ 1990년대 이전 정부 여성복지 시각의 '잔여주의적·소극적 한계' 본질은? [교재 p.340, 워크북 p.126]",
+    "a": "문제의 원인을 사회구조가 아닌 여성 개인의 결함으로 진단하여 예방보다 사후치료적 미봉책에 그침"
+  },
+  {
+    "q": "★★☆ 현행 여성복지 정책 수립이 남성 주도적으로 흐르는 행정·입법적 원인은? [교재 p.340, 워크북 p.127]",
+    "a": "국회의원 여성 비율(20% 내외)과 의사결정권을 가진 고위 공무원 내 여성 비중이 현저히 낮기 때문"
+  },
+  {
+    "q": "★★☆ 한국 여성 관련 법률들이 '일관성 결여 및 불균형 추진' 비판을 받는 입법상 원인은? [교재 p.341, 워크북 p.127]",
+    "a": "통합 설계 없이 사건 발생 시마다 개별 법률이 제정되어 법 조문 및 연령 기준(청소년·아동)이 충돌하기 때문"
+  },
+  {
+    "q": "★★☆ 2015년 이후 젠더 갈등의 정치화 속에서 등장한 20대 남성 집단 상징 유행어는? [교재 p.341-342, 워크북 p.128]",
+    "a": "이대남"
+  },
+  {
+    "q": "★★☆ 직장 내에서 남성 상사가 '펜스 룰'을 적용할 경우 여성 근로자가 받는 구조적 피해는? [교재 p.342, 워크북 p.129]",
+    "a": "비공식 정보 네트워킹, 멘토링, 핵심 업무 논의에서 배제되어 승진과 경력 성장에 불이익을 받음"
+  },
+  {
+    "q": "★★☆ 미래 여성복지 방향 1: '가족 다양성 존중'의 핵심 정책적 과제는? [교재 p.343, 워크북 p.129]",
+    "a": "정상가족(부모+자녀) 규범을 탈피하여 1인 가구, 한부모, 재혼, 공동체 가구 등 다변화된 현실을 포용함"
+  },
+  {
+    "q": "★★☆ 미래 여성복지 방향 2: '성인지적 사회보장' 구축의 본질적 의미는? [교재 p.344, 워크북 p.129-130]",
+    "a": "여성을 남편에 의존하는 피부양자로 보지 않고 생애주기에 맞춘 독자적 사회보장 수급권을 확립함"
+  },
+  {
+    "q": "★★☆ 미래 여성복지 방향 3: '실질적 평등 보장'이 요구하는 과제는? [교재 p.344-345, 워크북 p.130]",
+    "a": "법조문상의 형식적 평등을 넘어 일상과 사회 구조 속의 성차별적 성역할 고정관념과 보수성을 해소함"
+  },
+  {
+    "q": "★★☆ 미래 여성복지 방향 4: '여성 인권 증진과 보호'의 사회적 인식 전환 과제는? [교재 p.345, 워크북 p.130]",
+    "a": "가정폭력·성폭력을 개인적 사정이 아닌 성차별에 기반한 범죄이자 인권 침해로 사회적으로 명확히 규정함"
+  },
+  {
+    "q": "★★☆ 미래 여성복지 방향 5: '생애과정에 적합한 복지'가 보장하려는 여성의 권리는? [교재 p.345-346, 워크북 p.130-131]",
+    "a": "유급노동, 가사·돌봄, 절충형 등 여성이 원하는 생애 경로를 선택해도 경제적·사회적 불이익이 없도록 함"
+  },
+  {
+    "q": "★★☆ 2019년 정부 8개 부처에 설치된 성주류화 정책 총괄 전담 부서는? [교재 p.346, 워크북 p.131]",
+    "a": "양성평등정책담당관실"
+  },
+  {
+    "q": "★★☆ UN 여성차별철폐협약(CEDAW) 8차 보고서가 한국 정부에 권고한 총괄기구 강화 방안은? [교재 p.346-347, 워크북 p.131]",
+    "a": "성평등위원회를 '대통령 직속 기구'로 상향 설치하고 타 부처를 통제할 인적·재정적·법적 권한을 줄 것"
+  },
+  {
+    "q": "★★☆ 미래 여성복지 방향 7: '교차성 관점(Intersectionality)'이 강조하는 구체적 시각은? [교재 p.347, 워크북 p.131-132]",
+    "a": "여성을 단일 범주로 묶지 않고 이주, 장애, 계층 등 중복된 취약성을 지닌 소수자를 맞춤 지원함"
+  },
+  {
+    "q": "★★☆ 제15장 교재 결론이 제시하는 미래 여성복지의 3대 핵심 가치는? [교재 p.347, 워크북 p.132]",
+    "a": "다양성, 평등, 연대"
+  },
+  {
+    "q": "★★☆ 여성복지가 취약계층 특수복지를 넘어 지향해야 할 궁극적 지평은? [교재 p.347-348, 워크북 p.132]",
+    "a": "사회 전체의 지속가능성과 성평등한 돌봄사회를 위한 보편적 성평등 복지체계 구축"
+  },
+  {
+    "q": "★★☆ 벨 후크스(bell hooks)의 명제 \"페미니즘은 모두를 위한 것이다\"가 시사하는 바는? [교재 p.348, 워크북 p.132]",
+    "a": "여성복지는 여성만의 이익 투쟁이 아니라 불평등 구조를 개선하여 남녀 모두가 상생하는 공동체를 만드는 과제임"
+  },
+  {
+    "q": "★★☆ 1950~70년대 보호·구제 중심 정책이 지녔던 근본적 한계는? [교재 p.336, 워크북 p.123]",
+    "a": "가부장적 사회구조 해소나 여성 권리 신장으로 나아가지 못하고 수동적 비시민으로 시혜적 구제에 머묾"
+  },
+  {
+    "q": "★☆☆ 1987년 제정된 「남녀고용평등법」의 법적 노동권 의의는? [교재 p.337, 워크북 p.124]",
+    "a": "모집, 채용, 임금, 승진, 정년 등 노동 전 과정에서의 성차별을 금지하는 고용 평등 법제를 다짐"
+  },
+  {
+    "q": "★☆☆ 2001년 '여성부' 출범이 지니는 행정적 의미는? [교재 p.337, 워크북 p.124]",
+    "a": "여성 관련 국정 과제와 성평등 정책을 독자적 중앙 행정 부처 차원에서 국가 책임으로 명시함"
+  },
+  {
+    "q": "★☆☆ 여성복지 수행 원리 중 '평등성의 원칙'에 위배되는 사례는? [교재 p.338, 워크북 p.124-125]",
+    "a": "거주 지역이 지방 중소도시라는 이유로 수도권보다 현저히 낮은 수준의 복지 서비스를 제공받는 경우"
+  },
+  {
+    "q": "★☆☆ 여성복지 수행 원리 중 '전문성의 원칙'이 올바르게 적용된 현장 사례는? [교재 p.338, 워크북 p.125]",
+    "a": "복합적 위기를 겪는 여성 이용자에게 단순 자원봉사 대신 사회복지사, 정신과 의사 등 다학제 인력이 개입함"
+  },
+  {
+    "q": "★☆☆ 여성복지 수행 원리 중 '통합성의 원칙'이 적용된 지원 방식은? [교재 p.338-339, 워크북 p.125]",
+    "a": "빈곤 한부모 여성에게 생계비, 자녀 보육, 주거, 법률, 취업 훈련을 묶어서 패키지로 지원함"
+  },
+  {
+    "q": "★☆☆ 여성복지 수행 원리 중 '지속성의 원칙'에 위배되는 현장 사례는? [교재 p.339, 워크북 p.125-126]",
+    "a": "성폭력 피해 여성이 여전히 심한 트라우마를 겪는데 예산 부족을 이유로 상담을 조기 강제 종료하는 경우"
+  },
+  {
+    "q": "★☆☆ 1990년대 이후 여성복지 대상이 전체 여성으로 확대되었음에도 발생한 한계는? [교재 p.340, 워크북 p.126]",
+    "a": "국고 예산 증액이 수반되지 않아 복지 프로그램의 양과 질이 실질적으로 불충분했던 점"
+  },
+  {
+    "q": "★☆☆ 의사결정권자(국회의원·고위 공무원)의 낮은 여성 비율이 가져오는 부작용은? [교재 p.340, 워크북 p.127]",
+    "a": "여성들이 체감하는 일상의 젠더 문제와 실제 욕구가 국정 우선순위에서 배제되거나 밀려남"
+  },
+  {
+    "q": "★☆☆ 체계적 통일성 없이 개별 제정된 여성 관련 법률들의 문제 사례는? [교재 p.341, 워크북 p.127]",
+    "a": "청소년기본법, 아동복지법 간 청소년·아동의 연령 정의가 상이하여 현장에서 서비스 적용에 혼선을 줌"
+  },
+  {
+    "q": "★☆☆ 여성 일자리 사업이 여가부, 복지부, 고용부 등에 분산 추진될 때의 폐해는? [교재 p.341, 워크북 p.127-128]",
+    "a": "부처 간 연계 부족으로 정책 중복과 사각지대가 발생하고 국고 예산의 비효율성을 가져옴"
+  },
+  {
+    "q": "★☆☆ 인터넷 커뮤니티에서 결혼 후 경제권이 없는 남성을 조롱하는 차별적 용어는? [교재 p.342, 워크북 p.128]",
+    "a": "퐁퐁남"
+  },
+  {
+    "q": "★☆☆ 정상가족 중심 복지 정책이 현 현대 가구에 초래하는 사각지대는? [교재 p.343, 워크북 p.129]",
+    "a": "급증하는 1인 가구, 한부모, 동거 가구를 배제하고 여성에게 가사·돌봄 성역할을 고착시킴"
+  },
+  {
+    "q": "★☆☆ 국민기초생활보장 등 공공부조 개편 시 성인지적 관점에서 우선할 사항은? [교재 p.344, 워크북 p.129-130]",
+    "a": "여성의 생애주기별 빈곤 실태와 공공부조 수급 기준의 성별 적절성을 사전 조사 점검함"
+  },
+  {
+    "q": "★☆☆ 가정폭력·성폭력 관련법 제정에도 불구하고 예방이 어려운 문화적 요인은? [교재 p.345, 워크북 p.130]",
+    "a": "폭력을 성차별적 범죄가 아닌 개인 불상사나 집안 사정으로 치부하는 대중의 젠더 인식 부족"
+  },
+  {
+    "q": "★☆☆ 생애과정에 적합한 복지 정책이 성립하기 위한 기본 환경 조건은? [교재 p.345-346, 워크북 p.130-131]",
+    "a": "여성이 돌봄과 유급노동 중 어떤 경로를 선택해도 경제적·사회적 불이익을 받지 않도록 함"
+  },
+  {
+    "q": "★☆☆ 성평등가족부의 부처 총괄 권한 미흡 문제 해결을 위한 조직 개혁 과제는? [교재 p.346, 워크북 p.131]",
+    "a": "타 부처 법령·사업에 대한 강제적 시정 권고권을 가진 대통령 직속 성평등위원회 설치"
+  },
+  {
+    "q": "★☆☆ 장애, 이주 배경을 가진 여성에게 '교차성 관점'이 제공하는 정책 유용성은? [교재 p.347, 워크북 p.131-132]",
+    "a": "획일적 대우를 지양하고 중복된 불평등 맥락을 파악하여 맞춤형 복지 서비스를 제공함"
+  },
+  {
+    "q": "★☆☆ 미래 여성복지가 지향하는 '성평등 돌봄사회'의 의미는? [교재 p.347-348, 워크북 p.132]",
+    "a": "돌봄을 여성 개인에게 전가하지 않고 국가와 사회가 공적으로 책임지는 지속가능한 사회"
+  },
+  {
+    "q": "★☆☆ 1995년 「여성발전기본법」이 2014년 개정되어 2015년부터 시행 중인 현행 법률명은? [교재 p.337, 워크북 p.124]",
+    "a": "「양성평등기본법」"
+  },
+  {
+    "q": "★☆☆ 제15장 '여성복지의 전망과 과제' 단원의 전체 최종 결론은? [교재 p.336-348, 워크북 p.123-136]",
+    "a": "보호 패러다임을 넘어 다양성·평등·연대의 가치를 바탕으로 성주류화와 교차성을 강화하여 보편적 성평등 복지사회를 구축해야 함"}
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var deck = [];
+    var cur = 0;
+    var swapTimer = null;
+
+    document.title = '제' + LECTURE.no + '장 - ' + LECTURE.title;
+    document.getElementById('page-title').textContent = '제' + LECTURE.no + '장 플래시카드';
+    document.getElementById('page-sub').textContent = LECTURE.title;
+
+    var cardEl = document.getElementById('flashcard');
+
+    function reduceMotion() {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateCards(data) {
+        var errors = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'cards가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = (i + 1) + '번 카드';
+            var problems = [];
+            if (!item || typeof item !== 'object') {
+                problems.push('카드가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) problems.push('q(질문)가 없거나 비어 있습니다.');
+                if (typeof item.a !== 'string' || !item.a.trim()) problems.push('a(정답)가 없거나 비어 있습니다.');
+            }
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        return { errors: errors, valid: valid };
+    }
+
+    function showProblemScreen(opts) {
+        document.getElementById('card-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startDeck(list) {
+        deck = list;
+        cur = 0;
+        document.getElementById('problem-screen').style.display = 'none';
+        document.getElementById('card-screen').style.display = 'block';
+        render();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof cards === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'cards를 찾을 수 없습니다. const cards = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 카드 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '카드와 카드 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateCards(cards);
+
+        if (result.errors.length === 0) {
+            startDeck(result.valid);
+            return;
+        }
+
+        var total = Array.isArray(cards) ? cards.length : 0;
+        var badCount = total - result.valid.length;
+        showProblemScreen({
+            title: '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요',
+            summary: badCount > 0
+                ? '전체 ' + total + '장 중 ' + badCount + '장에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                : '카드 데이터를 확인하고 새로고침하세요.',
+            items: result.errors,
+            tips: ['카드마다 q(질문)와 a(정답)가 모두 있어야 하고, 둘 다 글자(따옴표로 감싼 문장)여야 합니다'],
+            buttonText: result.valid.length > 0 ? '오류 없는 ' + result.valid.length + '장만 먼저 보기' : null,
+            onButton: function () { startDeck(result.valid); }
+        });
+    }
+
+    /* ---------- 카드 표시 ---------- */
+    // 질문 앞의 ★(중요도)와 끝의 [출처]를 따로 떼어 작은 표식으로 보여줍니다.
+    function parseQuestion(raw) {
+        var text = raw.trim();
+        var stars = '';
+        var src = '';
+        var m = text.match(/^([★☆]{1,5})\s*/);
+        if (m) { stars = m[1]; text = text.slice(m[0].length); }
+        var s = text.match(/\s*\[([^\]]{1,40})\]\s*$/);
+        if (s) { src = s[1]; text = text.slice(0, s.index); }
+        if (!text.trim()) { text = raw.trim(); stars = ''; src = ''; }
+        return { stars: stars, src: src, text: text };
+    }
+
+    function render() {
+        var c = deck[cur];
+        var p = parseQuestion(c.q);
+
+        document.getElementById('question').textContent = p.text;
+        document.getElementById('answer').textContent = c.a.trim();
+        document.getElementById('source').textContent = p.src ? '출처: ' + p.src : '';
+
+        var starsEl = document.getElementById('stars');
+        if (p.stars) {
+            var filled = (p.stars.match(/★/g) || []).length;
+            starsEl.textContent = p.stars;
+            starsEl.setAttribute('aria-label', '중요도 ' + p.stars.length + '개 중 ' + filled + '개');
+            starsEl.style.display = 'inline-block';
+        } else {
+            starsEl.style.display = 'none';
+        }
+
+        document.getElementById('current').textContent = cur + 1;
+        document.getElementById('total').textContent = deck.length;
+        document.getElementById('bar').style.width = ((cur + 1) / deck.length * 100) + '%';
+    }
+
+    function flip() { cardEl.classList.toggle('flipped'); }
+
+    function go(delta) {
+        cur = (cur + delta + deck.length) % deck.length;
+        clearTimeout(swapTimer);
+        if (cardEl.classList.contains('flipped') && !reduceMotion()) {
+            // 먼저 카드를 앞면으로 돌리고, 옆면이 되어 안 보일 때 내용을 바꿔서 다음 정답이 미리 비치지 않게 함
+            cardEl.classList.remove('flipped');
+            swapTimer = setTimeout(render, 300);
+        } else {
+            cardEl.classList.remove('flipped');
+            render();
+        }
+    }
+    function nextCard() { go(1); }
+    function prevCard() { go(-1); }
+
+    cardEl.addEventListener('click', flip);
+
+    document.addEventListener('keydown', function (e) {
+        if (document.getElementById('card-screen').style.display === 'none') return;
+        if (e.key === 'ArrowRight') { nextCard(); }
+        else if (e.key === 'ArrowLeft') { prevCard(); }
+        else if ((e.key === ' ' || e.key === 'Enter') && e.target.tagName !== 'BUTTON') { e.preventDefault(); flip(); }
+    });
+
+    // 스마트폰: 좌우로 밀어서 넘기기
+    var touchX = null, touchY = null;
+    cardEl.addEventListener('touchstart', function (e) {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+    }, { passive: true });
+    cardEl.addEventListener('touchend', function (e) {
+        if (touchX === null) return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        var dy = e.changedTouches[0].clientY - touchY;
+        touchX = null;
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
+            if (dx < 0) nextCard(); else prevCard();
+        }
+    }, { passive: true });
+
+    init();
+</script>
+</body>
+</html>

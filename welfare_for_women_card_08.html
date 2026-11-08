@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 플래시카드</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 눈이 편한 차분한 초록 계열 (index.html의 플래시카드 색과 맞춤) */
+    body {
+        font-family: 'Pretendard', sans-serif;
+        background: linear-gradient(135deg, #2f7d5b 0%, #1b4332 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .container { width: 100%; max-width: 850px; margin: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+    .header { text-align: center; color: white; margin-bottom: 20px; }
+    .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .header .sub { font-size: 1.05rem; font-weight: 600; opacity: 0.92; margin-bottom: 10px; word-break: keep-all; }
+    .header .count { font-size: 1.1rem; font-weight: 700; }
+    .progress { max-width: 340px; height: 6px; margin: 12px auto 0; background: rgba(255,255,255,0.25); border-radius: 3px; overflow: hidden; }
+    #bar { height: 100%; width: 0; background: white; border-radius: 3px; transition: width 0.3s; }
+
+    /* 카드 */
+    .stage { perspective: 1400px; margin: 12px 0; }
+    .card {
+        position: relative;
+        width: 100%;
+        height: min(460px, 60vh);
+        height: min(460px, 60dvh);
+        min-height: 320px;
+        cursor: pointer;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card:focus-visible { outline: 3px solid #fde68a; outline-offset: 4px; }
+
+    .side {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 26px 18px;
+        border-radius: 20px;
+        overflow-y: auto;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        word-break: keep-all;
+        white-space: pre-line;
+    }
+    .front { background: white; color: #1e293b; }
+    .back { background: #f0f7f2; color: #1b4332; transform: rotateY(180deg); }
+
+    .meta { display: flex; align-items: center; justify-content: space-between; min-height: 28px; white-space: normal; }
+    .chip { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; }
+    .chip-q { background: #f1f5f9; color: #475569; }
+    .chip-a { background: #cfe8d8; color: #1b4332; }
+    .stars { font-size: 0.95rem; font-weight: 800; color: #1f6b46; background: #e3f1e8; padding: 3px 10px; border-radius: 20px; display: none; }
+
+    /* 내용이 길어도 위쪽이 잘리지 않도록 margin:auto로 가운데 맞춤 */
+    .body { margin: auto; padding: 14px 0; text-align: center; font-size: 1.4rem; font-weight: 700; line-height: 1.55; }
+    .back .body { font-size: 1.55rem; font-weight: 800; }
+    .src { min-height: 1.2em; text-align: center; font-size: 0.85rem; color: #64748b; white-space: normal; }
+
+    .tip { text-align: center; color: rgba(255,255,255,0.85); font-size: 0.9rem; margin: 4px 0 14px; word-break: keep-all; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 12px; }
+    .btn { padding: 18px 10px; border: none; border-radius: 12px; background: white; color: #1f6b46; font-family: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .btn:hover { background: #f1f5f9; transform: translateY(-2px); }
+    .btn:focus-visible { outline: 3px solid #fde68a; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid #dc3545; box-shadow: 0 10px 30px rgba(0,0,0,0.25); color: #1e293b; }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: #dc3545; }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: #2e7d5b; color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #1e293b; outline-offset: 2px; }
+
+    @media (max-width: 600px) {
+        body { padding: 14px; }
+        .header h1 { font-size: 1.6rem; }
+        .side { padding: 16px 18px 14px; }
+        .body { font-size: 1.2rem; }
+        .back .body { font-size: 1.3rem; }
+        .controls { grid-template-columns: 1fr 1fr; }
+        .controls .btn-list { grid-column: 1 / -1; }
+        .btn { padding: 16px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .card, #bar, .btn { transition: none; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="card-screen">
+        <div class="header">
+            <h1 id="page-title">플래시카드</h1>
+            <p class="sub" id="page-sub"></p>
+            <p class="count"><span id="current">1</span> / <span id="total">0</span></p>
+            <div class="progress"><div id="bar"></div></div>
+        </div>
+
+        <div class="stage">
+            <div class="card" id="flashcard" role="button" tabindex="0" aria-label="카드 뒤집기">
+                <div class="side front">
+                    <div class="meta"><span class="chip chip-q">질문</span><span class="stars" id="stars"></span></div>
+                    <div class="body" id="question"></div>
+                    <div class="src" id="source"></div>
+                </div>
+                <div class="side back">
+                    <div class="meta"><span class="chip chip-a">정답</span></div>
+                    <div class="body" id="answer"></div>
+                    <div class="src"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="tip">카드를 누르면 정답이 보여요. 화살표 키나 좌우로 밀어서 넘길 수 있어요.</p>
+
+        <div class="controls">
+            <button class="btn" type="button" onclick="prevCard()">이전</button>
+            <button class="btn" type="button" onclick="nextCard()">다음</button>
+            <button class="btn btn-list" type="button" onclick="location.href='index.html'">목록으로 돌아가기</button>
+        </div>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 8, title: "고용상 차별의 금지⑴" };
+</script>
+
+<!-- ③ 카드 데이터: 노트북LM이 만든 const cards = [...]; 를 통째로 덮어쓰세요.
+     아래 2장은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     카드마다 q(질문)와 a(정답)가 모두 있어야 합니다. -->
+<script>
+    const cards = [
+        {"q":"★★★ 1948년 UN 세계인권선언이 확립한 성평등 및 모성보호의 인권적 의의는? [교재 p.158, 워크북 p.90]",
+    "a": "전문에서 남녀 동권재확인, 제16조 혼인 시 동등한 권리, 제25조 모성과 아동의 특별 보호 권리를 보편적 인권으로 규정함"
+  },
+  {
+    "q": "★★★ 1966년 UN 사회권 규약과 자유권 규약이 성평등 법제에 가져온 결정적 변화는? [교재 p.159, 워크북 p.90]",
+    "a": "세계인권선언의 선언적 권리를 법적 구속력을 가진 조약으로 법제화하여 국가에게 성평등 보장 법적 의무를 부과함"
+  },
+  {
+    "q": "★★★ '여성 인권의 국제 헌장'이라 불리는 1979년 UN 여성차별철폐협약(CEDAW)의 핵심 성격은? [교재 p.160, 워크북 p.90]",
+    "a": "여성에 대한 모든 형태의 차별을 정의하고 정치·경제·사회 전 영역에서 실질적 평등 달성을 위한 국가 의무를 법제화함"
+  },
+  {
+    "q": "★★★ UN 여성차별철폐협약(CEDAW) 제4조가 차별로 보지 않는 2가지 특별 조치는? [교재 p.161, 워크북 p.90]",
+    "a": "실질적 평등 촉진을 위한 '일시적 특혜조치(적극적 평등실현조치)' 및 '모성보호를 위한 특별 조치'"
+  },
+  {
+    "q": "★★★ 1995년 제4차 세계여성회의 '베이징 행동강령'이 제시한 성평등 구현의 핵심 전략은? [교재 p.161-162, 워크북 p.91]",
+    "a": "여성의 빈곤, 폭력, 경제, 권력 참여 등 12개 중점 분야의 구체적 이행 과제와 '성 주류화(Gender Mainstreaming)' 전략"
+  },
+  {
+    "q": "★★★ 2015년 UN 지속가능발전목표(SDGs)의 성평등 목표(목표 5) 및 핵심 슬로건은? [교재 p.163, 워크북 p.91]",
+    "a": "성평등 달성 및 모든 여성·여아의 임파워먼트 구현 & \"Leave no one behind\" (단 한 사람도 소외되지 않도록)"
+  },
+  {
+    "q": "★★★ 2021년 파리 세대평등포럼(GEF)에서 발표된 6대 행동연대의 의의는? [교재 p.164, 워크북 p.91]",
+    "a": "베이징 25주년을 맞아 젠더 폭력 종식, 경제적 정의 등 6대 핵심 분야에서 국가와 기업이 민관 다자적 이행을 약속함"
+  },
+  {
+    "q": "★★★ 1920~1950년대 ILO 초기 협약들(C3, C4, C45 등)이 지녔던 법적 시각의 특징과 한계는? [교재 p.165, 워크북 p.92]",
+    "a": "여성을 모성기능과 신체적 취약성에 따른 '특별 보호 대상'으로 파악하여 야간·갱내근로를 금지했으나 취업 기회를 제약함"
+  },
+  {
+    "q": "★★★ ILO 제100호 협약(1951) 및 제111호 협약(1958)이 확립한 보편적 노동권 원칙은? [교재 p.166, 워크북 p.92]",
+    "a": "제100호: 동일가치노동 동일임금 원칙 / 제111호: 고용 및 직업상 차별 금지를 성평등의 핵심 국제기준으로 확립"
+  },
+  {
+    "q": "★★★ 1990년 ILO 제171호 야간근로 협약 개정이 가져온 결정적 패러다임 변화는? [교재 p.167, 워크북 p.92]",
+    "a": "여성 전용 야간근로 금지(제89호)를 폐지하고, 남녀 모두의 야간근로 건강과 안전을 보호하는 평등주의 기준으로 전환"
+  },
+  {
+    "q": "★★★ 2019년 ILO 제190호 협약이 세계 최초로 규정한 노동인권 규범의 핵심 내용은? [교재 p.168, 워크북 p.92]",
+    "a": "'일의 세계(World of Work)' 전반에서 발생하는 젠더 기반 폭력과 괴롭힘을 통합 규율하고 국가·기업 책임을 명시함"
+  },
+  {
+    "q": "★★★ 헌법재판소가 판시한 헌법상 '평등의 원칙'의 본질적 의미는? [교재 p.169, 워크북 p.93]",
+    "a": "일체 차별을 부정하는 절대적 평등이 아닌, 합리적 근거가 있는 차등은 허용하고 불합리한 차별을 금지하는 '상대적 평등'"
+  },
+  {
+    "q": "★★★ 차별금지법제에서 지정하는 차별금지 사유(성별, 장애 등)가 지니는 공통적 특징 3가지는? [교재 p.170, 워크북 p.93]",
+    "a": "개인 능력·직무와 무관함, 태생적·비자발적 귀속 속성, 역사적으로 상당 기간 차별받아 온 소수자 집단의 속성"
+  },
+  {
+    "q": "★★★ 고용상 차별 유형 중 '직접 차별(Direct Discrimination)'의 개념 정의는? [교재 p.171, 워크북 p.93]",
+    "a": "차별금지 사유(성별 등) 자체가 직접적 계기가 되어 합리적 이유 없이 거절, 해고, 하향 채용 등 불리한 처우를 가하는 행위"
+  },
+  {
+    "q": "★★★ 고용상 차별 유형 중 '간접 차별(Indirect Discrimination)'의 성립 요건 3가지는? [교재 p.172, 워크북 p.93]",
+    "a": "표면상 성 중립적 기준 적용, 특정 성에게 현저히 불리한 결과 초래, 사업주가 그 기준의 직무상 정당성을 입증하지 못함"
+  },
+  {
+    "q": "★★★ 국가인권위원회(2006)가 초·중등 교장·교감 여성 우선 임용 조치를 합리적 우대로 인정한 근거는? [교재 p.173-174, 워크북 p.94]",
+    "a": "여성 교사 대비 관리직의 통계적 극심한 불균형은 오랜 기간 누적된 '구조적 차별'의 결과이므로 이를 시정하는 것은 정당함"
+  },
+  {
+    "q": "★★★ 실제 속성(장애, 성정체성 등)의 유무와 상관없이 불리하게 처우하는 '인지적 차별'이란? [교재 p.175, 워크북 p.94]",
+    "a": "어떤 사람이 실제로는 특정 집단에 속하지 않음에도 가해자가 해당 속성이 있다고 생각·추측하여 불이익을 주는 차별"
+  },
+  {
+    "q": "★★★ 2개 이상의 차별 사유가 결합하여 나타나는 '복합 차별(Intersectional Discrimination)'이란? [교재 p.175, 워크북 p.94]",
+    "a": "성별+연령, 성별+장애 등 둘 이상의 보호 속성이 다층적으로 결합하여 단일 사유로 설명할 수 없는 불이익을 초래하는 차별"
+  },
+  {
+    "q": "★★★ 차별금지법제에서 다루는 '성(性)'의 범주에 포함되는 3가지 개념적 요소는? [교재 p.176, 워크북 p.94]",
+    "a": "생물학적 성(Sex), 사회문화적 성역할(Gender), 성적 정체성 및 성성(Sexuality)"
+  },
+  {
+    "q": "★★★ 남녀고용평등법 제2조 제1호 단서에 규정된 성차별의 법적 예외 사유 3가지는? [교재 p.177, 워크북 p.95]",
+    "a": "진정직업자격(BFOQ), 임신·출산·수유 등 모성보호 조치, 차별 해소를 위한 적극적 고용개선조치(AA)"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제7조(모집과 채용)의 규정 내용 및 위반 시 벌칙은? [교재 p.178, 워크북 p.95]",
+    "a": "모집·채용 시 성차별 및 직무 무관 용모·체중·신체조건·미혼조건 제시 금지 / 위반 시 500만 원 이하 벌금"
+  },
+  {
+    "q": "★★★ 남녀고용평등법 제7조가 근로기준법 제6조와 차별화되는 고용 단계상 법적 기능은? [교재 p.179, 워크북 p.95]",
+    "a": "근로기준법이 미치지 못하는 '근로계약 체결 전 단계(모집·채용)'의 차별을 규율하는 노동시장 질서법 기능"
+  },
+  {
+    "q": "★★★ 남녀고용평등 업무처리규정 제3조가 규정한 모집·채용 차별의 구체적 사례 3가지는? [교재 p.180, 워크북 p.95]",
+    "a": "특정 성 채용 기회 미부여/분리 채용, 동일 스펙에도 특정 성을 하향 직급/비정규직 채용, 특정 성에만 신체·미혼 조건 요구"
+  },
+  {
+    "q": "★★★ 1994년 여성단체들의 대기업 고발 사건을 계기로 1995년 남녀고용평등법에 신설된 조항은? [교재 p.180-181, 워크북 p.95]",
+    "a": "직무 수행에 필요하지 않은 용모·키·체중 등 신체적 조건과 미혼 조건 제시·요구 금지 조항(제7조 2항)"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제8조(임금)의 동일가치노동 동일임금 원칙 및 위반 시 벌칙은? [교재 p.181-182, 워크북 p.95]",
+    "a": "동일 사업 내 동일가치노동에 동일 임금을 지급해야 함 / 위반 시 3년 이하 징역 또는 3천만 원 이하 벌금"
+  },
+  {
+    "q": "★★★ 동일가치노동 여부를 객관적으로 평가하는 4대 판단 기준 요소는? [교재 p.182-183, 워크북 p.95]",
+    "a": "기술(Skill), 노력(Effort), 책임(Responsibility), 작업조건(Working Conditions)"
+  },
+  {
+    "q": "★★★ 남녀고용평등 업무처리규정 제4조상 군복무 호봉 인정 시 임금 차별 위반에 해당하는 경우는? [교재 p.183, 워크북 p.95]",
+    "a": "실제 군복무 기간을 초과하여 가산하거나 미필·면제 남성에게까지 남성이라는 이유로 호봉 가산을 적용해 여성과 차별하는 경우"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제9조(임금 외의 금품 등)의 규정 내용 및 위반 시 벌칙은? [교재 p.184, 워크북 p.95]",
+    "a": "복리후생, 가족수당, 통근수당, 자금 융자 등 생활보조 금품 지급 시 성차별 금지 / 위반 시 500만 원 이하 벌금"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제10조(교육·배치 및 승진)의 규정 내용 및 위반 시 벌칙은? [교재 p.184-185, 워크북 p.95]",
+    "a": "사업주는 근로자의 교육, 배치, 승진 인사관리 전 과정에서 성별 차별 금지 / 위반 시 500만 원 이하 벌금"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제11조(정년·퇴직 및 해고)의 규정 내용 및 위반 시 법적 벌칙은? [교재 p.185, 워크북 p.95]",
+    "a": "근로관계 종료(정년·퇴직·해고) 시 성차별 금지 / 위반 시 고평법 내 최고 형벌인 5년 이하 징역 또는 3천만 원 이하 벌금"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제11조 제2항이 전면 무효화 및 금지한 부당한 근로계약은? [교재 p.185-186, 워크북 p.96]",
+    "a": "여성 근로자의 혼인, 임신 또는 출산을 퇴직 사유로 예정하는 불법 근로계약 체결 및 각서 부과 행위"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제12조의 직장 내 성희롱 금지 의무 및 가해 사업주에 대한 법적 처벌은? [교재 p.186, 워크북 p.96]",
+    "a": "사업주, 상급자, 근로자의 직장 내 성희롱 전면 금지 / 사업주가 직접 성희롱 가해 시 1,000만 원 이하 과태료 부과"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제13조에 따른 직장 내 성희롱 예방교육 주기 및 미실시 시 벌칙은? [교재 p.187, 워크북 p.96]",
+    "a": "사업주는 매년 1회 이상 전체 임직원 대상 예방교육 실시 및 게시 / 미이행 시 500만 원 이하 과태료 부과"
+  },
+  {
+    "q": "★★★ 직장 내 성희롱 신고 접수 시 사업주가 지체 없이 이행해야 할 3대 조치 의무는? [교재 p.187-188, 워크북 p.96]",
+    "a": "지체 없이 사실 확인 조사 실시, 피해자 의사에 반하지 않는 유급휴가·배치전환 보호, 성희롱 확인 시 가해자 징계"
+  },
+  {
+    "q": "★★★ 성희롱 피해 근로자나 신고자에게 해고 등 불리한 처우를 한 사업주에 대한 법적 형벌은? [교재 p.188, 워크북 p.96]",
+    "a": "남녀고용평등법 제14조 제6항 위반으로 3년 이하의 징역 또는 3천만 원 이하의 벌금에 처함"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제14조의2(고객 등에 의한 성희롱 방지) 조항에 따른 사업주의 보호 의무는? [교재 p.189, 워크북 p.96]",
+    "a": "고객 등 제3자 성희롱 피해 근로자의 요청 시 배치전환·유급휴가 조치(미이행 시 300만 과태료) & 불이익 금지(위반 시 500만 과태료)"
+  },
+  {
+    "q": "★★★ 남녀고용평등법 제26조에 따른 노동위원회 성차별 시정신청의 법적 제척 기간은? [교재 p.190, 워크북 p.96]",
+    "a": "차별적 처우 등을 받은 날(지속되는 차별은 종료일)부터 6개월 이내"
+  },
+  {
+    "q": "★★★ 노동위원회의 성차별 조정서 및 중재결정서(제28조)가 갖는 확정적 법적 효력은? [교재 p.191, 워크북 p.96]",
+    "a": "민사소송법상 '재판상 화해'와 동일한 효력을 지녀 법원 확정판결과 같은 이행 강제력을 가짐"
+  },
+  {
+    "q": "★★★ 사업주의 고의적이거나 반복적인 성차별 인정 시 노동위원회가 명할 수 있는 배상액 한도는? [교재 p.191-192, 워크북 p.96]",
+    "a": "근로자에게 발생한 손해액의 최대 3배 이내 징벌적 금전 배상 명령 가능"
+  },
+  {
+    "q": "★★★ 지방노동위 성차별 시정명령에 불복 시 취해야 할 행정·사법 불복 절차 및 기한은? [교재 p.192, 워크북 p.96]",
+    "a": "명령서 송달 10일 이내 중앙노동위원회 재심 신청 -> 재심판정 15일 이내 행정소송 제기"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제30조(입증책임)에 따라 고용 성차별 분쟁 시 입증책임을 지는 주체는? [교재 p.193, 워크북 p.96]",
+    "a": "전적으로 '사업주'가 입증책임을 부담함 (차별 부존재 및 직무상 정당성 입증)"
+  },
+  {
+    "q": "★★★ 성차별의 합법적 예외가 되는 '진정직업자격(BFOQ)'의 개념과 구체적 예시는? [교재 p.177, 워크북 p.95]",
+    "a": "남배우, 여배우, 여탕 목욕관리사 등 직무의 본질적 성격상 특정 성의 종사가 불가피하게 요구되는 사유"
+  },
+  {
+    "q": "★★★ 「남녀고용평등법」 제8조 제3항이 위장 분리 설립 사업장을 동일 사업으로 보는 입법 취지는? [교재 p.182, 워크북 p.95]",
+    "a": "여성 다수 사업장을 편법으로 별도 법인 분리하여 동일가치노동 동일임금 원칙 적용을 회피하려는 위법을 차단하기 위함"
+  },
+  {
+    "q": "★★★ 적극적 고용개선조치(Affirmative Action)가 남녀고용평등법상 차별로 처리되지 않는 이유는? [교재 p.177, 워크북 p.95]",
+    "a": "과거 차별로 불이익을 받아온 여성 등의 실질적 평등을 촉진하기 위한 한시적 우대 조치로서 제2조 단서로 허용되기 때문"
+  },
+  {
+    "q": "★★★ 특정 집단과 밀접하게 연계되어 있다는 이유로 불이익을 가하는 '관계적 차별'이란? [교재 p.175, 워크북 p.94]",
+    "a": "본인이 아닌 보호대상 집단(예: 장애인 자녀, 특정 소수자)과 관계를 맺고 있다는 이유로 불리하게 대우하는 차별"
+  },
+  {
+    "q": "★★★ 개인의 주관적 의도와 무관하게 사회·노동시장 관행으로 고착된 '구조적 차별'이란? [교재 p.171-172, 워크북 p.93]",
+    "a": "개인의 해의나 차별 의도가 없더라도 관행, 제도, 노동시장 구조에 의해 집단적 불평등 결과가 누적·고착되는 현상"
+  },
+  {
+    "q": "★★★ 영국 「평등법(Equality Act 2010)」 제14조가 세계 최초로 입법화한 차별 보호 개념은? [교재 p.175, 워크북 p.94]",
+    "a": "두 가지 이상의 보호 속성이 결합하여 발생하는 '복합 차별(Combined / Intersectional Discrimination)'"
+  },
+  {
+    "q": "★★★ 사업주가 성희롱 예방교육 실시 후 교육 자료에 대해 이행해야 하는 추가 관리 의무는? [교재 p.187, 워크북 p.96]",
+    "a": "예방교육의 주요 내용을 근로자가 상시 볼 수 있는 장소에 비치하거나 게시해야 함 (미이행 시 500만 과태료)"
+  },
+  {
+    "q": "★★★ 노동위원회 성차별 시정제도가 적용되는 고용상 불이익 및 성차별 행위의 범위는? [교재 p.190, 워크북 p.96]",
+    "a": "모집·채용, 임금, 금품, 교육·배치·승진, 정년·해고 성차별 및 직장 내 성희롱 피해자 불이익 처우 전반"
+  },
+  {
+    "q": "★★★ 제8장 '고용상 차별의 금지 ⑴' 단원의 최종 핵심 시사점은? [교재 p.158-193, 워크북 p.90-97]",
+    "a": "UN·ILO 국제인권기준을 바탕으로 모집부터 해고까지 고용 전 과정의 성차별을 금지하고 노동위원회 시정제로 구제함"}
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var deck = [];
+    var cur = 0;
+    var swapTimer = null;
+
+    document.title = '제' + LECTURE.no + '장 - ' + LECTURE.title;
+    document.getElementById('page-title').textContent = '제' + LECTURE.no + '장 플래시카드';
+    document.getElementById('page-sub').textContent = LECTURE.title;
+
+    var cardEl = document.getElementById('flashcard');
+
+    function reduceMotion() {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateCards(data) {
+        var errors = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'cards가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = (i + 1) + '번 카드';
+            var problems = [];
+            if (!item || typeof item !== 'object') {
+                problems.push('카드가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) problems.push('q(질문)가 없거나 비어 있습니다.');
+                if (typeof item.a !== 'string' || !item.a.trim()) problems.push('a(정답)가 없거나 비어 있습니다.');
+            }
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        return { errors: errors, valid: valid };
+    }
+
+    function showProblemScreen(opts) {
+        document.getElementById('card-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startDeck(list) {
+        deck = list;
+        cur = 0;
+        document.getElementById('problem-screen').style.display = 'none';
+        document.getElementById('card-screen').style.display = 'block';
+        render();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof cards === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'cards를 찾을 수 없습니다. const cards = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 카드 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '카드와 카드 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateCards(cards);
+
+        if (result.errors.length === 0) {
+            startDeck(result.valid);
+            return;
+        }
+
+        var total = Array.isArray(cards) ? cards.length : 0;
+        var badCount = total - result.valid.length;
+        showProblemScreen({
+            title: '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요',
+            summary: badCount > 0
+                ? '전체 ' + total + '장 중 ' + badCount + '장에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                : '카드 데이터를 확인하고 새로고침하세요.',
+            items: result.errors,
+            tips: ['카드마다 q(질문)와 a(정답)가 모두 있어야 하고, 둘 다 글자(따옴표로 감싼 문장)여야 합니다'],
+            buttonText: result.valid.length > 0 ? '오류 없는 ' + result.valid.length + '장만 먼저 보기' : null,
+            onButton: function () { startDeck(result.valid); }
+        });
+    }
+
+    /* ---------- 카드 표시 ---------- */
+    // 질문 앞의 ★(중요도)와 끝의 [출처]를 따로 떼어 작은 표식으로 보여줍니다.
+    function parseQuestion(raw) {
+        var text = raw.trim();
+        var stars = '';
+        var src = '';
+        var m = text.match(/^([★☆]{1,5})\s*/);
+        if (m) { stars = m[1]; text = text.slice(m[0].length); }
+        var s = text.match(/\s*\[([^\]]{1,40})\]\s*$/);
+        if (s) { src = s[1]; text = text.slice(0, s.index); }
+        if (!text.trim()) { text = raw.trim(); stars = ''; src = ''; }
+        return { stars: stars, src: src, text: text };
+    }
+
+    function render() {
+        var c = deck[cur];
+        var p = parseQuestion(c.q);
+
+        document.getElementById('question').textContent = p.text;
+        document.getElementById('answer').textContent = c.a.trim();
+        document.getElementById('source').textContent = p.src ? '출처: ' + p.src : '';
+
+        var starsEl = document.getElementById('stars');
+        if (p.stars) {
+            var filled = (p.stars.match(/★/g) || []).length;
+            starsEl.textContent = p.stars;
+            starsEl.setAttribute('aria-label', '중요도 ' + p.stars.length + '개 중 ' + filled + '개');
+            starsEl.style.display = 'inline-block';
+        } else {
+            starsEl.style.display = 'none';
+        }
+
+        document.getElementById('current').textContent = cur + 1;
+        document.getElementById('total').textContent = deck.length;
+        document.getElementById('bar').style.width = ((cur + 1) / deck.length * 100) + '%';
+    }
+
+    function flip() { cardEl.classList.toggle('flipped'); }
+
+    function go(delta) {
+        cur = (cur + delta + deck.length) % deck.length;
+        clearTimeout(swapTimer);
+        if (cardEl.classList.contains('flipped') && !reduceMotion()) {
+            // 먼저 카드를 앞면으로 돌리고, 옆면이 되어 안 보일 때 내용을 바꿔서 다음 정답이 미리 비치지 않게 함
+            cardEl.classList.remove('flipped');
+            swapTimer = setTimeout(render, 300);
+        } else {
+            cardEl.classList.remove('flipped');
+            render();
+        }
+    }
+    function nextCard() { go(1); }
+    function prevCard() { go(-1); }
+
+    cardEl.addEventListener('click', flip);
+
+    document.addEventListener('keydown', function (e) {
+        if (document.getElementById('card-screen').style.display === 'none') return;
+        if (e.key === 'ArrowRight') { nextCard(); }
+        else if (e.key === 'ArrowLeft') { prevCard(); }
+        else if ((e.key === ' ' || e.key === 'Enter') && e.target.tagName !== 'BUTTON') { e.preventDefault(); flip(); }
+    });
+
+    // 스마트폰: 좌우로 밀어서 넘기기
+    var touchX = null, touchY = null;
+    cardEl.addEventListener('touchstart', function (e) {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+    }, { passive: true });
+    cardEl.addEventListener('touchend', function (e) {
+        if (touchX === null) return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        var dy = e.changedTouches[0].clientY - touchY;
+        touchX = null;
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
+            if (dx < 0) nextCard(); else prevCard();
+        }
+    }, { passive: true });
+
+    init();
+</script>
+</body>
+</html>

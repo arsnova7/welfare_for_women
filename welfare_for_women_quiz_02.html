@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 퀴즈</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #b45309;
+        --bg-gray: #f4f6f8;
+        --success: #28a745;
+        --danger: #dc3545;
+    }
+    body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-gray); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 700px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 1.8rem; color: #14213d; font-weight: 800; margin-bottom: 10px; word-break: keep-all; }
+    .header p { color: #55657d; font-weight: bold; font-size: 1.1rem; margin: 0; }
+    .header .score-text { margin-top: 6px; color: #166534; font-size: 1rem; }
+
+    .quiz-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .q-type { display: inline-block; background: #e0e7f1; color: #14213d; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 15px; font-weight: 700; }
+    #question-text { font-weight: bold; font-size: 1.2rem; margin-bottom: 25px; word-break: keep-all; line-height: 1.4; color: #14213d; }
+
+    .option-btn { width: 100%; text-align: left; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; transition: 0.2s; line-height: 1.4; color: #2f3640; font-weight: 500; font-family: inherit; }
+    .option-btn:hover { background: #fff7ed; border-color: var(--primary); }
+    .option-btn:focus-visible, .btn-next:focus-visible, .result-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+    .option-btn.correct { background: #e6fffa; border-color: var(--success); color: var(--success); font-weight: bold; }
+    .option-btn.wrong { background: #fff5f5; border-color: var(--danger); color: var(--danger); opacity: 0.6; }
+
+    .btn-next { width: 100%; padding: 16px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; margin-top: 25px; display: none; font-size: 1.1rem; transition: 0.2s; font-family: inherit; }
+    .btn-next:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .hint-box, .exp-box { padding: 18px; border-radius: 10px; margin-top: 15px; display: none; line-height: 1.6; word-break: keep-all; font-size: 0.95rem; }
+    .hint-box { background: #fffbeb; border: 1px solid #fbd38d; color: #b45309; }
+    .exp-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+
+    .result-card { background: white; border-radius: 20px; padding: 40px; text-align: center; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .result-btn { width: 100%; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; font-weight: bold; transition: 0.2s; font-family: inherit; }
+    .result-btn:hover { background: #f3f6fa; }
+    .result-score { margin: 6px 0 4px; font-size: 3.4rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+    .result-detail { margin: 0 0 10px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    #result-msg { margin: 0 0 18px; line-height: 1.6; word-break: keep-all; color: #14213d; font-weight: 600; }
+    .missed { text-align: left; margin: 0 0 18px; padding: 10px 16px; border: 1px solid #e0e7f1; border-radius: 10px; }
+    .missed summary { cursor: pointer; font-weight: 700; color: #14213d; padding: 4px 0; }
+    .missed ol { margin: 10px 0 4px; padding-left: 26px; font-size: 0.95rem; line-height: 1.55; word-break: keep-all; color: #2f3640; }
+    .missed li { margin-bottom: 8px; }
+
+    /* 문제 화면 아래의 목록으로 돌아가기 버튼 */
+    .list-btn { width: 100%; padding: 14px; margin-top: 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: white; color: #14213d; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .list-btn:hover { background: #f3f6fa; }
+    .list-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid var(--danger); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; color: #14213d; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: var(--danger); }
+    .problem-list .warn .tag { color: var(--primary); }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="header">
+            <h1 id="lecture-title"></h1>
+            <p id="progress-text"></p>
+            <p id="score-text" class="score-text"></p>
+        </div>
+        <div class="quiz-box">
+            <div id="question-type" class="q-type">개념확인</div>
+            <div id="question-text"></div>
+            <div id="options-container"></div>
+
+            <div id="hint-box" class="hint-box">💡 <b>힌트:</b> <span id="hint-text"></span></div>
+            <div id="exp-box" class="exp-box">✅ <b>정답 및 해설:</b> <span id="exp-text"></span></div>
+
+            <button id="next-btn" class="btn-next" type="button" onclick="nextQuestion()">다음 문제로</button>
+        </div>
+
+        <button class="list-btn" type="button" onclick="goList()">🏠 목록으로 돌아가기</button>
+    </div>
+
+    <div id="result-screen" class="result-card">
+        <h2 id="result-title">🎊 학습을 마쳤습니다!</h2>
+        <p id="result-score" class="result-score"></p>
+        <p id="result-detail" class="result-detail"></p>
+        <p id="result-msg"></p>
+        <details id="missed-details" class="missed">
+            <summary id="missed-summary"></summary>
+            <ol id="missed-list"></ol>
+        </details>
+        <button id="retry-missed-btn" class="result-btn" type="button" style="background:var(--primary); color:white; border:none;" onclick="retryMissed()"></button>
+        <button class="result-btn" type="button" onclick="retryAll()">🔄 처음부터 다시 풀기</button>
+        <button class="result-btn" type="button" onclick="location.href='index.html'">🏠 목록으로 돌아가기</button>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 2, title: "여성주의 역사" };
+</script>
+
+<!-- ③ 퀴즈 데이터: 노트북LM이 만든 const quizData = [...]; 를 통째로 덮어쓰세요.
+     아래 1문항은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     문제마다 type, q, o, a, h, e 가 모두 있어야 하고, a는 첫 번째 보기가 0입니다. -->
+<script>
+    const quizData = [
+        {
+            "type": "개념확인",
+    "q": "여성주의(페미니즘)에 대한 설명으로 적절하지 않은 것은? [워크북 p.21, 교재 p.15, 2025 기말]",
+    "o": [
+      "여성과 남성이 성별로 인해 차별받지 않고 동등하게 살아야 한다는 사상과 사회운동을 뜻한다.",
+      "정치·경제·사회·문화 전 영역에서 성평등을 실현하기 위한 다양한 노력을 포함한다.",
+      "가부장적 구조에서 여성들이 겪는 제도적·구조적 불평등을 비판한다.",
+      "여성의 권익을 다른 사회적 소수자의 권익보다 우선시하여 우위에 두는 것을 목표로 한다."
+    ],
+    "a": 3,
+    "h": "여성주의는 특정 성별을 타인보다 우위에 두는 것이 아니라 성별에 따른 차별 철폐와 보편적 평등을 목표로 함을 확인하세요.",
+    "e": "여성주의는 성별로 인한 불이익과 차별을 해소하고 모든 인간의 존엄성과 성평등을 실현하려는 사상 및 운동이지, 여성의 권리를 타 소수자보다 우선하여 특권화하려는 목적이 아닙니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "T.H. 마샬(Marshall)의 시민권 이론에 대한 설명으로 옳은 것은? [워크북 p.21, 교재 p.16-17, 2025 기말]",
+    "o": [
+      "마샬은 시민권을 정치적·사회적·문화적 권리의 세 유형으로 나누었다.",
+      "시민적 권리는 20세기 이후 등장했으며, 생존과 복지를 보장받는 권리를 의미한다.",
+      "정치적 권리는 18세기 무렵 형성되었으며, 개인의 자유와 법 앞의 평등과 관련된다.",
+      "사회적 권리는 20세기 이후 발전했으며, 교육·보건·복지 등 인간다운 생활을 위한 권리를 의미한다."
+    ],
+    "a": 3,
+    "h": "마샬은 18세기 시민적 권리(자유권), 19세기 정치적 권리(참정권), 20세기 사회적 권리(복지권) 순으로 발전했다고 보았습니다.",
+    "e": "마샬의 시민권 3단계에 따르면, 18세기 시민적 권리(개인의 자유, 법 앞의 평등), 19세기 정치적 권리(투표권, 공직진출), 20세기 사회적 권리(교육, 보건, 복지 등 인간다운 삶의 보장) 순으로 발전했습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "한국의 여성 참정권 역사에 대한 설명으로 적절한 것은? [워크북 p.22, 교재 p.18, 2025 기말]",
+    "o": [
+      "조선 후기부터 여성에게 제한적 참정권이 주어졌다.",
+      "일제강점기에는 일부 지역에서 여성의 공식적 참정권이 인정되었다.",
+      "1945년 해방 직후 미군정 시기부터 여성의 투표권이 보장되었다.",
+      "1948년 「제헌헌법」에서 남녀 평등이 명시되며 여성의 참정권이 보장되었다."
+    ],
+    "a": 3,
+    "h": "1948년 제정된 대한민국 제헌헌법 제5조에 남녀평등이 명시되면서 1948년 5월 10일 제헌 국회의원 선거에서 최초로 여성 투표권이 보장되었습니다.",
+    "e": "한국 여성은 1948년 제헌헌법 제정으로 법적 참정권을 확립하고, 1948년 5월 10일 제헌 국회의원 선거를 통해 역사상 처음으로 투표권과 피선거권을 행사했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "성별, 인종, 계급, 성적 지향 등 다양한 정체성과 차별 기제가 복합적으로 작용함을 설명하는 개념은? [워크북 p.22, 교재 p.19, 2025 기말]",
+    "o": [
+      "다층적 정체성",
+      "교차성 (Intersectionality)",
+      "사회적 배제",
+      "불평등 구조"
+    ],
+    "a": 1,
+    "h": "킴벌리 크렌쇼가 제시한 개념으로 단일 차별 범주를 넘어 복합적 차별 경험을 분석하는 틀입니다.",
+    "e": "교차성(Intersectionality)은 성별, 인종, 계급 등 다층적 차별 기제가 단일하게 작동하지 않고 서로 결합하여 개인의 불평등 경험을 낳는다는 이론입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "한국 여성운동 및 성평등 현실에 대한 설명으로 옳지 않은 것은? [워크북 p.22, 교재 p.24]",
+    "o": [
+      "2025년 세계경제포럼(WEF) 발표 성평등 지수에서 한국은 101위로 하위권에 머물렀다.",
+      "여성의 대학 진학률 등 교육 기회는 남성과 유사해졌으나 노동시장 고용률 및 임금격차는 여전히 존재한다.",
+      "여성 국회의원 비율은 19.1% 수준으로 OECD 평균(33.8%)에 크게 미치지 못한다.",
+      "한국의 성평등 지수는 OECD 최상위권에 속해 성평등이 이미 완벽히 실현되었다."
+    ],
+    "a": 3,
+    "h": "한국은 교육이나 건강 지표는 높으나 경제적 참여 및 정치적 역량 강화 영역 지표가 낮아 성평등 지수 101위에 머물고 있습니다.",
+    "e": "한국의 성평등 지수는 2025년 WEF 기준 101위로 하위권이며, 법적 평등 달성에도 불구하고 고용·임금·정치적 대표성 등 실질적 성평등 지표는 여전히 미흡합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성주의(Feminism)의 어원적 출처와 기본 사회적 지향점으로 올바른 것은? [교재 p.15, 워크북 p.14]",
+    "o": [
+      "라틴어 'Femina(여성)'에서 유래하였으며, 성차별 철폐와 남녀 모두의 인간 존엄 실현을 지향함",
+      "그리스어 'Polis'에서 유래하여 여성을 위한 정당 정치를 의미함",
+      "독일어 'Staat'에서 유래하여 복지국가 확립만을 목적으로 함",
+      "영문 'Female'에서 유래하여 남성의 모든 사회 활동 금지를 뜻함"
+    ],
+    "a": 0,
+    "h": "라틴어 Femina에서 유래하여 성별로 인한 억압과 차별을 해소하려는 이념입니다.",
+    "e": "여성주의(Feminism)는 라틴어 Femina(여성)에서 유래한 용어로, 성차별적 구조를 해체하고 성별에 구애받지 않는 성평등 사회를 건설하고자 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "T.H. 마샬의 시민권 이론 중 18세기에 형성된 '시민적 권리(Civil rights)'의 주요 구성 요소는? [교재 p.16, 워크북 p.14]",
+    "o": [
+      "신체의 자유, 언론·생각·신앙의 자유, 재산 소유권, 계약의 자유 및 사법적 재판을 받을 권리",
+      "선거에서 투표할 수 있는 투표권 및 공직에 출마할 피선거권",
+      "무상 의무교육, 공적 노령연금, 국민건강보험 수급권",
+      "노동조합을 결성하고 파업할 수 있는 노동3권"
+    ],
+    "a": 0,
+    "h": "18세기 사법제도 및 법 앞의 평등과 관련된 개인의 법적 자유권입니다.",
+    "e": "18세기에 형성된 시민적 권리는 법 앞의 평등, 신체의 자유, 재산권, 계약의 자유 등 사법적 혜택과 개인의 기본적 자유를 의미합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "T.H. 마샬의 시민권 이론 중 19세기에 형성된 '정치적 권리(Political rights)'의 핵심적 내용은? [교재 p.16, 워크북 p.14]",
+    "o": [
+      "의원이나 지방자치단체장을 선출하는 선거권(투표권) 및 공직에 출마하여 국정에 참여할 피선거권",
+      "최저생계비를 지급받을 공공부조 수급권",
+      "신체의 자유 및 사법 재판을 받을 권리",
+      "근로기준법상 유급 휴가 및 퇴직금 청구권"
+    ],
+    "a": 0,
+    "h": "의회 제도의 발전과 함께 대중이 국정에 참여할 수 있게 된 참정권입니다.",
+    "e": "19세기에 확립된 정치적 권리는 선거권과 피선거권을 통해 국가 의사결정 과정에 직접·간접적으로 참여하는 참정권을 가리킵니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "T.H. 마샬의 시민권 형성 과정에서 여성들이 역사적으로 배제되었던 구조적 원인은? [교재 p.16, 워크북 p.15]",
+    "o": [
+      "시민권의 표준이 '자산을 가진 남성 가장'으로 설정되어 기혼 여성이 사적 영역인 가정에 갇혀 법적 주체로 인정받지 못함",
+      "여성들의 지능지수가 법적으로 측정 불가능했기 때문",
+      "여성들이 참정권 요구를 서면으로 제출하는 것을 스스로 거부했기 때문",
+      "모든 국가가 18세기에 여성을 장관으로 자동 임명했기 때문"
+    ],
+    "a": 0,
+    "h": "시민권이 공적 영역의 독립된 남성 가장을 전제로 설계되어 여성이 피부양자로 배제되었음을 보세요.",
+    "e": "마샬의 시민권 역사는 공적 영역의 남성 독립 생계부양자를 표준 시민으로 삼아, 사적 가정 영역에 묶여 있던 여성의 시민권 획득을 장기간 지연시켰습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "1789년 프랑스 혁명 당시 발표된 「인간과 시민의 권리 선언」이 가진 역사적 젠더 한계는? [교재 p.17, 워크북 p.15]",
+    "o": [
+      "자유와 평등을 주창했으나 선언문 속 '인간(Man)'과 '시민'에 여성을 제외하고 수동적 시민으로 한정함",
+      "선언문 전체가 여성에 의해 작성되어 남성이 전면 배제됨",
+      "모든 기혼 여성에게 매월 기본소득을 지급한 조항이 수록됨",
+      "왕정을 복위시키고 여성의 취업을 법적으로 의무화함"
+    ],
+    "a": 0,
+    "h": "보편적 시민을 표방했으나 정치적 참정권과 법적 자격을 남성에게만 부여했던 한계입니다.",
+    "e": "프랑스 혁명의 시민 선언은 보편성을 표방했지만 여성을 공적 정치 참여에서 배제하는 남성 중심적 한계를 지녔습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "1791년 프랑스 혁명의 남성 중심성에 반발하여 「여성과 여성시민의 권리 선언」을 발표하고 \"여성이 단두대에 설 권리가 있다면 의정단상에 오를 권리도 있다\"고 주장한 인물은? [교재 p.17, 워크북 p.15]",
+    "o": [
+      "올랭프 드 구주 (Olympe de Gouges)",
+      "메리 울스턴크래프트",
+      "시몬 드 보부아르",
+      "에멀린 팽크허스트"
+    ],
+    "a": 0,
+    "h": "프랑스 혁명기 여성 참정권을 최초로 공개 요구하다 단두대에서 처형당한 프랑스 여성 운동가입니다.",
+    "e": "올랭프 드 구주는 1791년 여성시민 권리선언을 작성하여 여성의 정치 참여 권리를 촉구하였으나, 1793년 단두대에서 처형되었습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "1792년 저서 『여성의 권리 옹호』를 발표하여 여성이 열등해 보이는 것은 교육의 부재 때문이라 지적하고 이성 계발과 동등한 교육권을 주장한 학자는? [교재 p.18, 워크북 p.15]",
+    "o": [
+      "메리 울스턴크래프트 (Mary Wollstonecraft)",
+      "베티 프리단",
+      "주디스 버틀러",
+      "킴벌리 크렌쇼"
+    ],
+    "a": 0,
+    "h": "영국의 사상가로 '페미니즘의 어머니'라 불리며 교육권과 이성 계발을 강조했습니다.",
+    "e": "메리 울스턴크래프트는 『여성의 권리 옹호』에서 계몽주의적 이성을 여성에게 확장 적용하여 여성에 대한 동등한 교육과 시민권 부여를 요구했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "19세기 후반에서 20세기 초반 전개된 '제1물결 여성주의'의 핵심적 투쟁 목표 3가지는? [교재 p.18, 워크북 p.15-16]",
+    "o": [
+      "여성 참정권(선거권), 교육권, 재산 소유권 등 공적 영역에서의 법적 평등",
+      "디지털 성범죄 고발, SNS 미투 운동, 불법촬영 근절",
+      "낙태권 합법화, 가사노동 수당 지급, 성적 자기결정권",
+      "백인 중심 여성주의 비판 및 인종·계급 교차성 이론 확립"
+    ],
+    "a": 0,
+    "h": "제1물결은 참정권 확보 등 공적 법제도상의 권리 확득에 초점을 맞췄습니다.",
+    "e": "제1물결 여성주의는 19세기 중반~20세기 초 투표권, 교육권, 재산권 등 공적 법 테두리 안에서의 시민권 획득을 주 의제로 삼았습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "세계 역사상 가장 최초로 여성에게 투표권(참정권)을 법적으로 보장한 국가와 연도는? [교재 p.18, 워크북 p.15]",
+    "o": [
+      "뉴질랜드 (1893년)",
+      "미국 (1920년)",
+      "영국 (1918년)",
+      "프랑스 (1945년)"
+    ],
+    "a": 0,
+    "h": "1893년 세계 최초로 여성 선거권을 제정한 남반구 국가입니다.",
+    "e": "뉴질랜드는 1893년 세계 최초로 여성에게 참정권(투표권)을 부여하여 제1물결 여성운동의 이정표를 세웠습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "20세기 초 영국에서 에멀린 팽크허스트 등을 중심으로 여성 참정권 쟁취를 위해 과격한 시위와 의회 투쟁을 펼친 여성 참정권 운동가들을 가리키는 용어는? [교재 p.18, 워크북 p.15]",
+    "o": [
+      "서프러제트 (Suffragette)",
+      "플래퍼 (Flapper)",
+      "블루스타킹 (Bluestocking)",
+      "히피 (Hippie)"
+    ],
+    "a": 0,
+    "h": "참정권을 뜻하는 Suffrage에서 유래한 영국 여성 참정권 운동가 명칭입니다.",
+    "e": "서프러제트(Suffragette)는 20세기 초 영국에서 쇠사슬 묶기, 단식 투쟁 등 적극적 행동을 통해 여성 선거권을 쟁취하고자 했던 운동가들입니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "대한민국 역사상 처음으로 여성들이 국회의원 선거에서 투표권을 직접 행사한 역사적 계기와 일자는? [교재 p.18, 워크북 p.22]",
+    "o": [
+      "1948년 5월 10일 제헌 국회의원 선거",
+      "1919년 3월 1일 삼일독립선언",
+      "1960년 4월 19일 4·19 혁명",
+      "1987년 6월 29일 6·29 선언"
+    ],
+    "a": 0,
+    "h": "1948년 제헌헌법 제정 및 5·10 총선거를 통해 남녀평등 참정권이 실행되었습니다.",
+    "e": "한국 여성은 1948년 제헌헌법 제5조 남녀평등 규정에 따라, 1948년 5월 10일 제헌 국회의원 선거에서 최초로 투표권을 행사했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "1960~1980년대 전개된 '제2물결 여성주의'가 가정 내 폭력, 가사노동, 피임 등 사적 영역의 불평등을 사회화하기 위해 내건 핵심 슬로건은? [교재 p.18-19, 워크북 p.16]",
+    "o": [
+      "\"개인적인 것이 정치적인 것이다 (The personal is political)\"",
+      "\"빵과 장미를 달라\"",
+      "\"여성에 대한 폭력을 정당화하지 말라\"",
+      "\"페미니즘은 모두를 위한 것이다\""
+    ],
+    "a": 0,
+    "h": "가정이나 개인 일상에서 일어나는 불평등이 사적 문제가 아닌 구조적 정치 문제라는 슬로건입니다.",
+    "e": "제2물결 여성주의는 \"개인적인 것이 정치적인 것이다\"라는 구호 아래, 가정 내 성역할, 성폭력, 낙태 등 사적 문제에 숨겨진 가부장적 권력구조를 공론화했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "1949년 저서 『제2의 성』에서 \"여성은 태어나는 것이 아니라 만들어지는 것이다\"라는 명언을 남긴 프랑스의 여성주의 학자는? [교재 p.19, 워크북 p.16]",
+    "o": [
+      "시몬 드 보부아르 (Simone de Beauvoir)",
+      "메리 울스턴크래프트",
+      "킴벌리 크렌쇼",
+      "주디스 버틀러"
+    ],
+    "a": 0,
+    "h": "생물학적 성(Sex)과 사회문화적 성(Gender)의 구분에 이론적 기틀을 놓은 프랑스 철학자입니다.",
+    "e": "시몬 드 보부아르는 『제2의 성』에서 여성성이 생물학적 필연이 아니라 가부장적 사회에 의해 후천적으로 구성된 타자화의 결과임을 파악했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "1963년 저서 『여성의 신비(The Feminine Mystique)』를 집필하여 기혼 중산층 여성들의 정체성 상실과 우울을 고발하고 미국 전국여성기구(NOW)를 창립한 인물은? [교재 p.19, 워크북 p.16]",
+    "o": [
+      "베티 프리단 (Betty Friedan)",
+      "올랭프 드 구주",
+      "크리스틴 드 피장",
+      "벨 후크스"
+    ],
+    "a": 0,
+    "h": "전업주부의 현실을 '이름 붙일 수 없는 문제'로 규정하며 제2물결을 촉발한 미국 여성주의자입니다.",
+    "e": "베티 프리단은 『여성의 신비』를 통해 가정이라는 굴레에 갇힌 기혼 여성의 문제를 드러내어 미국 제2물결 여성운동을 대중화했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성주의 분파 중 기존 법제도 개혁과 고용·교육에서의 평등한 기회 보장을 강조하는 접근은? [교재 p.19, 워크북 p.16]",
+    "o": [
+      "자유주의 여성주의 (Liberal Feminism)",
+      "급진적 여성주의 (Radical Feminism)",
+      "마르크스주의 여성주의 (Marxist Feminism)",
+      "생태 여성주의 (Ecofeminism)"
+    ],
+    "a": 0,
+    "h": "합리주의와 개인의 자유를 기반으로 교육 및 법률적 개혁을 추진하는 유파입니다.",
+    "e": "자유주의 여성주의는 법적·제도적 기회 균등과 차별 철폐를 통해 여성의 공적 진출을 도모하는 유파입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "가부장제를 남성이 여성을 통제하는 근본적 억압 구조로 보고, 성적 자기결정권, 출산, 가정 내 성역할 등의 전면 해체를 주장하는 유파는? [교재 p.19, 워크북 p.16]",
+    "o": [
+      "급진적 여성주의 (Radical Feminism)",
+      "자유주의 여성주의",
+      "사회주의 여성주의",
+      "포스트모던 여성주의"
+    ],
+    "a": 0,
+    "h": "사적 영역에 내재된 가부장적 근본 구조의 해체를 주장하는 급진적 분파입니다.",
+    "e": "급진적(라디컬) 여성주의는 가부장제를 사회 억압의 가장 뿌리 깊은 근원으로 진단하고, 성과 몸, 가족 관계의 근본적 변혁을 요구합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성 억압의 원인을 자본주의 체제와 가부장제의 이중 구조로 보고, 여성의 무급 가사노동이 자본의 이윤 창출에 기여함을 비판한 유파는? [교재 p.19, 워크북 p.16]",
+    "o": [
+      "마르크스/사회주의 여성주의 (Socialist Feminism)",
+      "자유주의 여성주의",
+      "급진적 여성주의",
+      "제4물결 디지털 여성주의"
+    ],
+    "a": 0,
+    "h": "계급 억압(자본주의)과 젠더 억압(가부장제)의 결합 구조를 분석하는 유파입니다.",
+    "e": "마르크스 및 사회주의 여성주의는 여성의 가사·돌봄 노동이 무급으로 자본주의 생산체계를 뒷받침하는 현실과 계급·성차별의 연관성을 비판합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "1990~2000년대 등장한 '제3물결 여성주의'가 제2물결에 대해 제기한 핵심 비판은? [교재 p.19-20, 워크북 p.16-17]",
+    "o": [
+      "제2물결이 백인·이성애·중산층 여성의 경험을 보편화하여 흑인, 유색인종, 하층, 성소수자 여성의 다양성을 배제했다는 점",
+      "제2물결이 여성 참정권 운동을 전면 포기했다는 점",
+      "제2물결이 여성의 대학 진학을 법적으로 금지하려 했다는 점",
+      "제2물결이 모든 디지털 기기를 파괴하려 했다는 점"
+    ],
+    "a": 0,
+    "h": "단일한 '여성' 범주를 해체하고 인종, 계급, 성적 지향에 따른 다양성과 정체성의 정치를 제시한 흐름입니다.",
+    "e": "제3물결 여성주의는 단일한 여성 집단을 전제했던 기존 여성주의의 한계를 지적하며 흑인 여성주의, 퀴어 이론 등 여성 내부의 다양성을 강조했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "흑인 여성 노동자가 겪는 차별 사례를 계기로 성별, 인종, 계급이 복합 작용함을 설명하고자 킴벌리 크렌쇼가 제시한 법학적·사회학적 개념은? [교재 p.19, 워크북 p.17]",
+    "o": [
+      "교차성 (Intersectionality)",
+      "탈상품화 (Decommodification)",
+      "탈가족화 (Defamilialization)",
+      "성 주류화 (Gender Mainstreaming)"
+    ],
+    "a": 0,
+    "h": "서로 다른 정체성 교차점에서 생기는 중복 차별을 설명하는 교차성 개념입니다.",
+    "e": "킴벌리 크렌쇼(1989)는 흑인 여성이 성차별과 인종차별 중 하나로만 설명될 수 없는 교차적 불평등 위치에 있음을 입증하며 '교차성' 개념을 확립했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "2010년대 이후 현재 전개 중인 '제4물결 여성주의'의 핵심적 매체 및 운동 형태는? [교재 p.20, 워크북 p.17]",
+    "o": [
+      "SNS 및 디지털 플랫폼을 활용한 미투(#MeToo) 운동, 디지털 성범죄 고발 및 글로벌 실시간 연대",
+      "신문 종이 사설 기고 및 팩스 서명 운동",
+      "농촌 지역 봉건 농민 운동",
+      "정부 관관 관변 단체 일원화 운동"
+    ],
+    "a": 0,
+    "h": "디지털 기술과 해시태그를 중심으로 불법촬영, 성폭력 고발, 실시간 연대를 도모하는 제4물결입니다.",
+    "e": "제4물결 여성주의는 인터넷과 디지털 매체를 적극 활용하여 디지털 성범죄, 성희롱 고발, 미투 운동 등 즉각적이고 확산성 높은 디지털 페미니즘을 전개합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성주의(페미니즘)에 대한 일반적 오해와 이를 바로잡은 사회학적 설명으로 옳은 것은? [교재 p.21, 워크북 p.17-18]",
+    "o": [
+      "여성주의는 남성을 혐오하거나 배척하는 사상이 아니라, 성별로 인한 차별 구조를 해체하여 남녀 모두의 자유와 인권을 확장하려는 사상이다.",
+      "여성주의는 모든 남성을 법적으로 처벌하기 위해 제정된 사상이다.",
+      "여성주의는 여성의 가사노동 전담을 법적으로 의무화하려는 이론이다.",
+      "여성주의는 모든 사회복지 혜택을 남성에게만 몰아주자는 운동이다."
+    ],
+    "a": 0,
+    "h": "남성에 대한 억압이나 혐오가 아니라, 가부장적 차별 구조를 해체하여 모두를 해방시키는 성평등 운동입니다.",
+    "e": "여성주의는 남성을 적대시하는 운동이 아니라, 고정된 성역할과 차별 구조를 개혁함으로써 남성과 여성 모두가 인간으로서 자율성을 누리게 돕는 운동입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "사회적으로 강요되는 '유해한 남성성(toxic masculinity)'이 남성 자신에게 야기하는 우려스러운 결과는? [교재 p.21-22, 워크북 p.18]",
+    "o": [
+      "감정 표현 억압과 과도한 경쟁·지배 중시로 인해 우울증, 불안, 심리적 고립 등 남성의 정신건강을 해침",
+      "남성의 평균 수명이 여성보다 100년 연장됨",
+      "남성의 주식 투자 수익률이 1,000%로 상승함",
+      "남성의 노후 연금 수령액이 자동으로 무한 증대됨"
+    ],
+    "a": 0,
+    "h": "강인함만을 강요하고 약함이나 우는 것을 금기시하여 남성의 삶을 피폐하게 만드는 유해한 남성성입니다.",
+    "e": "유해한 남성성은 남성에게 과도한 지배력과 감정 억제, 공격성을 강제함으로써 남성 자신의 심리적 안녕과 인간관계를 훼손하는 부정적 작용을 합니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "한국 여성의 대학 진학률 등 교육 수준이 남성과 대등함에도 불구하고 노동시장에서 나타나는 현실적 성별 격차는? [교재 p.22, 워크북 p.18]",
+    "o": [
+      "채용에서의 불이익, 경력단절, 낮은 고용률 및 지속적인 성별 임금격차 발생",
+      "여성의 대기업 사장 임명 비율이 90%에 달함",
+      "여성의 경제 활동 참가율이 세계 1위에 도달함",
+      "남성 근로자의 임금이 여성의 10% 수준으로 폭락함"
+    ],
+    "a": 0,
+    "h": "교육 기회의 평등에도 불구하고 노동 진입, 승진, 임금 등 실질적 측면의 성차별이 공존하는 현실입니다.",
+    "e": "한국 여성의 교육적 성취는 매우 높으나, 채용 차별, 육아로 인한 경력단절, 유리천장 등으로 인해 고용률과 임금 면에서 성별 불평등이 유지되고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "영국 이코노미스트(The Economist)지가 발표하는 '유리천장 지수(Glass Ceiling Index)'에서 한국이 차지한 성적과 의미는? [교재 p.23, 워크북 p.18]",
+    "o": [
+      "OECD 조사 대상국 중 연속 최하위(꼴찌) 수준으로 직장 내 여성 승진 및 환경이 매우 취약함",
+      "OECD 조사 대상국 중 압도적 1위",
+      "전 세계 모든 국가 중 성평등 지수 100점 만점",
+      "유럽 북유럽 국가보다 여성 임원 비중이 5배 높은 수준"
+    ],
+    "a": 0,
+    "h": "여성의 노동시장 참여, 임금, 이사회 임원 비율 등을 평가한 지수로 한국이 최하위를 기록하고 있습니다.",
+    "e": "한국은 OECD 유리천장 지수에서 연속 최하위를 기록하며, 여성이 고위직 및 이사회로 진출하는 데 가로막힌 구조적 장벽이 여전히 견고함을 보여줍니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "대한민국 국회의원의 여성 비율(약 19.1%)과 OECD 회원국 평균(약 33.8%)을 비교한 평가로 옳은 것은? [교재 p.23, 워크북 p.18-19]",
+    "o": [
+      "한국의 여성 국회의원 비율은 OECD 평균에 크게 미달하며 정치적 대표성 향상이 시급함",
+      "한국의 여성 국회의원 비율이 OECD 평균의 3배에 달함",
+      "OECD 평균과 한국의 비율이 100% 동일함",
+      "한국 국회는 여성의 입후보를 법적으로 금지하고 있음"
+    ],
+    "a": 0,
+    "h": "입법부 내 여성 대표권(19.1%)이 OECD 평균(33.8%)보다 현저히 낮음을 확인하세요.",
+    "e": "한국의 여성 국회의원 비율은 약 19.1%로 OECD 평균(33.8%)에 한참 못 미쳐, 국가 의사결정 구조에서 여성의 정치적 대표성을 확대해야 할 과제를 남깁니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "2016년 행정자치부가 전국 가임기 여성 인구수를 지도로 시각화해 공개했다가 여성을 출산 도구화했다는 강한 비판을 받고 철회된 사건은? [교재 p.24, 워크북 p.19]",
+    "o": [
+      "대한민국 출산지도 사건",
+      "강남역 살인사건",
+      "샤넬코리아 조기출근 사건",
+      "인천 남동공단 임금투쟁 사건"
+    ],
+    "a": 0,
+    "h": "여성의 몸을 도구적 출산 기계로 환원시켰다는 지적을 받은 정부 행정 지치 사례입니다.",
+    "e": "2016년 '대한민국 출산지도'는 저출생 대책으로 가임기 여성 숫자를 지도에 표시하여, 여성의 주체성과 인권을 무시한 대표적 성인지 감수성 부재 사례로 대중적 분노를 샀습니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "2016년 5월 발생하여 한국 사회에서 여성 대상 범죄와 젠더 안전 및 불평등 문제를 대중적으로 폭발시킨 계기가 된 사건은? [교재 p.24-25, 워크북 p.19]",
+    "o": [
+      "강남역 살인사건",
+      "대한민국 출산지도 사건",
+      "S대 조교 성희롱 사건",
+      "남녀고용평등법 제정"
+    ],
+    "a": 0,
+    "h": "여성이라는 이유만으로 대상이 된 폭력에 대해 사회적 포스트잇 추모와 대중적 페미니즘이 확산된 턴포인트입니다.",
+    "e": "강남역 살인사건은 여성들이 일상에서 느끼는 젠더 기반 폭력과 불안을 공론화하고, 2030 영페미니즘 대중 운동이 폭발하는 결정적 계기가 되었습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "남성이 사회적 권력과 기득권을 독점하고 여성을 하위체계에 종속시키는 가부장적 사회 구조를 뜻하는 용어는? [교재 p.15, 워크북 p.14]",
+    "o": [
+      "가부장제 (Patriarchy)",
+      "모계사회 (Matriarchy)",
+      "조합주의 (Corporatism)",
+      "관료제 (Bureaucracy)"
+    ],
+    "a": 0,
+    "h": "남성 가장의 권력을 기초로 성별 불평등을 유지시키는 가부장제 개념입니다.",
+    "e": "가부장제(Patriarchy)는 남성에게 자산과 권력이 집중되고 여성을 종속적인 지위에 위치시키는 사회적·문화적 구조를 의미합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "T.H. 마샬의 시민권 이론에서 19세기에 확립된 '정치적 권리'에 해당하지 않는 항목은? [교재 p.16, 워크북 p.14]",
+    "o": [
+      "국민기초생활보장법에 의한 생계급여 지급",
+      "국회의원 선거에서의 투표권",
+      "지방선거에서의 피선거권",
+      "공무원 채용 시험 응시 권리"
+    ],
+    "a": 0,
+    "h": "생계급여 수급권은 20세기에 확립된 '사회적 권리(복지권)'에 속함을 주의하세요.",
+    "e": "생계급여 수급권은 20세기 사회적 권리(복지권)에 해당하며, 19세기 정치적 권리는 선거권, 피선거권 등 참정권에 한정됩니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "T.H. 마샬의 사회적 권리가 확립된 20세기 복지국가 형성기에도 여성의 사회적 권리가 남성에 비해 불완전했던 원인은? [교재 p.16, 워크북 p.15]",
+    "o": [
+      "사회보험 수급권이 남성 전업 임금노동자의 기여에 연동되어, 가사·돌봄을 전담한 여성은 피부양자로만 잔존했기 때문",
+      "여성의 국민연금 가입이 법적으로 금지되었기 때문",
+      "여성 수급자 전원에게 세금 100%를 과세했기 때문",
+      "모든 사회복지관이 남성 전용 시설로 운영되었기 때문"
+    ],
+    "a": 0,
+    "h": "남성 가장 완주고용 전제 사회보험 구조로 인해 여성의 파생적 수급권 한계가 발생했습니다.",
+    "e": "20세기 사회적 권리는 정규직 남성 가장을 표준 모델로 사회보험을 설계했기 때문에, 무급 노동을 담당한 기혼 여성은 독자적 권리를 갖지 못하고 남편의 피부양자에 머물렀습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "1848년 미국 뉴욕주에서 개최되어 여성의 참정권과 법적 권리를 촉구한 최초의 여성 권리 대회의 명칭은? [교재 p.18, 워크북 p.15]",
+    "o": [
+      "세네카 폴스 대회 (Seneca Falls Convention)",
+      "베를린 성평등 회의",
+      "파리 코뮌 회의",
+      "런던 노동자 대회"
+    ],
+    "a": 0,
+    "h": "1848년 미국 세네카 폴스에서 열려 여성 권리 선언문을 채택한 역사적 대회입니다.",
+    "e": "1848년 미국 세네카 폴스 대회는 앨리자베스 케이디 스탠턴 등이 주도하여 여성 참정권과 평등을 공식 요구한 근대 여성운동의 출발점입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "제2물결 여성주의가 사적 영역의 불평등을 해결하기 위해 제시한 대표적 사회적 쟁점에 해당하지 않는 것은? [교재 p.18-19, 워크북 p.16]",
+    "o": [
+      "여성의 인터넷 1인 방송 조회수 독점권",
+      "가정폭력 및 성폭력의 범죄화",
+      "피임 및 임신중절(낙태)의 선택권",
+      "가사노동과 양육 부담의 성별 불평등"
+    ],
+    "a": 0,
+    "h": "가정폭력, 피임, 임신중절, 가사노동 분담 등이 제2물결 사적 영역의 핵심 쟁점입니다.",
+    "e": "제2물결 여성주의는 가정폭력, 성폭력, 낙태권, 무급 가사노동을 사회적 억압 기제로 드러냈으며 인터넷 조회수 독점권 등은 관련이 없습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "생물학적으로 타고나는 신체적 성(Sex)과 사회·문화적으로 학습되는 성(Gender)의 차이에 대한 설명으로 옳은 것은? [교재 p.19, 워크북 p.14]",
+    "o": [
+      "Sex는 염색체·호르몬 등 생물학적 차이이며, Gender는 사회적으로 구성된 성역할과 정체성이다.",
+      "Sex가 사회적으로 구성된 것이고, Gender가 생물학적 타고난 차이이다.",
+      "Sex와 Gender는 완전히 동일한 영문 단어로 구분이 불가능하다.",
+      "Gender는 오직 동물에게만 적용되는 단어이다."
+    ],
+    "a": 0,
+    "h": "Sex(생물학적 성)와 Gender(사회문화적 성)의 개념적 구분을 명확히 파악하세요.",
+    "e": "Sex는 생물학적 남녀 구분을 의미하고, Gender는 사회와 문화 속에서 학습되고 기대되는 성역할, 태도, 불평등 구조를 가리킵니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "제3물결 여성주의가 포용하고자 했던 주체적 다양성의 범주로 올바른 것은? [교재 p.20, 워크북 p.17]",
+    "o": [
+      "흑인 및 유색인종 여성, 제3세계 여성, 성소수자, 하층 노동자 여성 등 다층적 주체",
+      "오직 백인 대기업 여성 임원 집단",
+      "모든 귀족 가문 출신 기혼 여성",
+      "남성 국회의원 단독 집단"
+    ],
+    "a": 0,
+    "h": "백인 중산층 중심을 벗어나 인종, 성적 지향, 계층을 포용하는 다양성의 정치를 상기하세요.",
+    "e": "제3물결은 여성 내부의 차이를 인정하며 유색인종, 성소수자, 제3세계 및 빈곤층 여성을 포함하는 다층적 연대를 지향했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "디지털 기술을 활용하여 불법촬영, 딥페이크 성범죄, 온라인 성희롱에 맞서는 제4물결 페미니즘을 일컫는 용어는? [교재 p.20, 워크북 p.17]",
+    "o": [
+      "디지털 페미니즘 (Digital Feminism)",
+      "생태 페미니즘",
+      "아나키스트 페미니즘",
+      "봉건 페미니즘"
+    ],
+    "a": 0,
+    "h": "온라인 커뮤니티, SNS, 해시태그를 무기로 성범죄에 맞서는 현대의 디지털 페미니즘입니다.",
+    "e": "디지털 페미니즘은 제4물결의 주요 특징으로, 사이버 성범죄와 젠더 폭력에 대응하여 온라인 연대와 제도 시정을 이끌어냅니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "성평등 문화가 확립될 때 남성이 누릴 수 있는 실질적 혜택으로 가장 적절한 것은? [교재 p.21, 워크북 p.18]",
+    "o": [
+      "유일 생계부양자로서의 과도한 중압감에서 벗어나 자녀 돌봄과 가족 삶의 질을 함께 공유함",
+      "남성의 직장에서의 퇴직금이 전액 소멸됨",
+      "남성의 건강보험료가 100배 인상됨",
+      "남성이 집안일을 전혀 하지 않게 됨"
+    ],
+    "a": 0,
+    "h": "남성 혼자 생계를 책임지던 중압감을 덜고 일·가정 균형을 찾게 되는 성평등의 남성 해방 효과입니다.",
+    "e": "성평등은 여성만을 위한 것이 아니라, 남성 역시 가장으로서의 독박 부양 부담과 감정 억제 압박에서 벗어나 삶의 주체성을 회복하게 돕습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 여성 노동자의 취업률이 20대 후반에 정점을 찍은 후 임신·육아로 급감했다가 40대에 비정규직으로 재취업하는 현상을 나타낸 곡선은? [교재 p.22, 워크북 p.18]",
+    "o": [
+      "M-커브 (M-Curve / M자형 취업률 곡선)",
+      "U-커브",
+      "S-커브",
+      "J-커브"
+    ],
+    "a": 0,
+    "h": "30대 출산·육아기 경력단절로 취업률이 폭패인 후 재진입하는 알파벳 M 모양의 곡선입니다.",
+    "e": "M-커브 현상은 한국 여성들이 30대 육아기에 노동시장에서 대거 이탈(경력단절)했다가 40대 이후 저임금·불안정 일자리로 재진입하는 구조적 현실을 보여줍니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국의 남녀 임금 격차(약 31~32% 수준)가 OECD 회원국 중에서 차지하는 위치는? [교재 p.23, 워크북 p.18]",
+    "o": [
+      "OECD가 통계를 집계한 이래 지속적으로 '가장 격차가 큰 1위(최하위)'를 기록함",
+      "OECD 국가 중 임금 격차가 0%로 완벽한 1위",
+      "OECD 국가 중 중간 수준 (15위)",
+      "OECD 국가 중 남성 임금이 여성보다 낮아 꼴찌"
+    ],
+    "a": 0,
+    "h": "한국이 OECD 국가 중 남녀 임금 격차가 수십 년간 가장 큰 1위를 기록하고 있음을 파악하세요.",
+    "e": "한국의 성별 임금 격차는 약 30%를 상회하여 OECD 회원국 중 가장 큰 격차(최하위)를 지속적으로 유지하고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "사회 제반 정책이나 일상에서 성별에 따른 차별과 편견, 구조적 불평등을 자각하고 반응하는 감수성은? [교재 p.24, 워크북 p.19]",
+    "o": [
+      "성인지 감수성 (Gender Sensitivity)",
+      "문화적 동화성",
+      "경제적 효율성",
+      "계급 종속성"
+    ],
+    "a": 0,
+    "h": "성별 불평등과 성차별적 요소를 민감하게 포착해 인지하는 감수성입니다.",
+    "e": "성인지 감수성(Gender Sensitivity)은 일상과 사회 정책 속에 숨겨진 성차별과 젠더 불평등 요소를 감지하고 바로잡으려는 성찰적 태도입니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "2018년 안태근 전 검사의 성추행 의혹을 서지현 검사가 방송에서 공개 고발하면서 한국 공공부문과 사회 전반으로 확산된 운동은? [교재 p.25, 워크북 p.20]",
+    "o": [
+      "한국의 미투(#MeToo) 운동",
+      "서프러제트 운동",
+      "탈코르셋 운동",
+      "스쿨미투 운동"
+    ],
+    "a": 0,
+    "h": "2018년 법조계 고발을 시작으로 문화예술계, 정치권 등으로 번진 미투 운동입니다.",
+    "e": "2018년 서지현 검사의 고발은 한국 사회 공직 및 각계각층의 젠더 폭력과 성희롱 권력구조를 밝히는 미투 운동의 대폭발을 가져왔습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "프랑스 혁명기 여성 참정권을 주창하다 단두대에서 처형된 올랭프 드 구주가 처형 직전 남긴 명언은? [교재 p.17, 워크북 p.15]",
+    "o": [
+      "\"여성이 단두대에 오를 권리가 있다면, 의정단상에 오를 권리도 당연히 있다.\"",
+      "\"여성에게 오직 가사노동의 의무만을 부여하라.\"",
+      "\"모든 정치적 권리를 왕에게 반납하라.\"",
+      "\"여성은 사적 공간에만 머물러야 한다.\""
+    ],
+    "a": 0,
+    "h": "단두대 처형권만큼 여성에게 정치 의회 진출권과 시민권이 부여되어야 함을 역설한 명언입니다.",
+    "e": "올랭프 드 구주는 처형 직전 \"여성이 단두대에 오를 권리가 있다면 단상에 오를 권리도 있다\"는 명언으로 여성 참정권의 당위성을 역사에 남겼습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "미국에서 여성 참정권(선거권)을 전국적으로 확립한 수정헌법 조항과 연도는? [교재 p.18, 워크북 p.15]",
+    "o": [
+      "미국 수정헌법 제19조 (1920년)",
+      "미국 수정헌법 제1조 (1791년)",
+      "미국 수정헌법 제13조 (1865년)",
+      "미국 수정헌법 제5조 (1800년)"
+    ],
+    "a": 0,
+    "h": "1920년 제정되어 성별로 인한 투표권 박탈을 금지한 미국 수정헌법 제19조입니다.",
+    "e": "미국은 1920년 수정헌법 제19조를 통해 \"미국 시민의 투표권은 성별을 이유로 부정되거나 제한되지 아니한다\"고 명시하여 여성 참정권을 확립했습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "베티 프리단 등이 1966년 창립하여 미국에서 입법 촉구 및 여성 권익 옹호 활동을 펴 온 대표적 단체는? [교재 p.19, 워크북 p.16]",
+    "o": [
+      "미국 전국여성기구 (NOW - National Organization for Women)",
+      "미국 공작연맹",
+      "유엔 여성기구 (UN Women)",
+      "국제 노동기구 (ILO)"
+    ],
+    "a": 0,
+    "h": "NOW라는 약칭으로 불리는 미국의 대표적 제2물결 여성 권익 옹호 기구입니다.",
+    "e": "미국 전국여성기구(NOW)는 1966년 베티 프리단 등이 설립하여 여성의 고용, 임금, 정치 참여 확대를 이끌어 온 조직입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "2018년 중고등학교 현장에서 교사들의 성희롱과 성차별 발언을 학생들이 SNS 및 학내 포스트잇으로 고발한 현상은? [교재 p.24, 워크북 p.19]",
+    "o": [
+      "스쿨 미투 (School MeToo)",
+      "탈코르셋 운동",
+      "디지털 성범죄 근절 운동",
+      "아빠 할당제"
+    ],
+    "a": 0,
+    "h": "학교 교실 내에서 자행되던 성희롱을 학생 주도로 공론화한 스쿨 미투 현상입니다.",
+    "e": "스쿨 미투는 청소년 소비자들이 학교 현장 내 젠더 폭력과 성차별적 교사 권력을 고발하여 교육계의 성인지 감수성 재편을 요구한 사건입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "제2장 '여성주의 역사' 단원의 전체 핵심 메시지를 종합 요약한 결론으로 가장 적절한 것은? [교재 p.14-26, 워크북 p.14-24]",
+    "o": [
+      "여성주의는 참정권 쟁취(제1물결)에서 사적 영역 개혁(제2물결), 다양성 존중(제3물결), 디지털 연대(제4물결)로 발전해 왔으며, 성별 불평등 구조를 해체하여 모두가 평등한 사회를 만드는 보평적 권리 운동이다.",
+      "여성주의 역사는 오직 미국에서만 전개되었으며 다른 국가에는 아무런 영향을 주지 않았다.",
+      "여성 참정권은 남성 정치인들의 자발적 시혜에 의해 아무런 투쟁 없이 획득되었다.",
+      "한국은 교육 평등이 이뤄졌으므로 성평등 지수가 세계 1위이며 추가적 여성 복지가 불필요하다."
+    ],
+    "a": 0,
+    "h": "여성주의 4대 물결의 역사적 진화와 성평등 사회 구축의 보편적 가치를 다룬 종합 결론입니다.",
+    "e": "제2장은 여성주의의 역사적 발전 과정(제1~4물결)과 시민권 확장의 역사를 살펴보고, 한국 사회의 성별 격차 현실을 진단하여 성평등이 모두를 위한 포용적 가치임을 강조합니다."
+        }
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var allQuestions = [];   // 검사를 통과한 전체 문제
+    var questions = [];      // 지금 풀고 있는 문제 묶음(전체 또는 틀린 문제)
+    var curIdx = 0;
+    var wrongCount = 0;      // 현재 문제에서 틀린 횟수
+    var correctFirst = 0;    // 이번 회차에서 한 번에 맞힌 문제 수
+    var missed = [];         // 이번 회차에서 한 번이라도 틀린 문제
+
+    document.title = '여성복지론 퀴즈 [제' + LECTURE.no + '장]';
+    document.getElementById('lecture-title').textContent = '제' + LECTURE.no + '장: ' + LECTURE.title;
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateQuizData(data) {
+        var errors = [];
+        var warnings = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'quizData가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, warnings: warnings, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = 'Q' + (i + 1);
+            var problems = [];
+
+            if (!item || typeof item !== 'object') {
+                problems.push('문제가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) {
+                    problems.push('q(질문)가 없거나 비어 있습니다.');
+                }
+
+                var oOk = Array.isArray(item.o);
+                if (!oOk) {
+                    problems.push('o(보기)가 배열([ ])이 아닙니다.');
+                } else {
+                    if (item.o.length < 2) {
+                        problems.push('보기가 ' + item.o.length + '개뿐입니다. 2개 이상 필요합니다.');
+                    }
+                    var bad = item.o.some(function (x) { return typeof x !== 'string' || !x.trim(); });
+                    if (bad) {
+                        problems.push('보기 중에 비어 있거나 글자가 아닌 항목이 있습니다.');
+                    } else {
+                        var uniq = {};
+                        item.o.forEach(function (x) { uniq[x.trim()] = true; });
+                        if (Object.keys(uniq).length !== item.o.length) {
+                            problems.push('똑같은 보기가 2개 이상 있습니다.');
+                        }
+                    }
+                }
+
+                if (typeof item.a === 'string') {
+                    problems.push('a(정답 번호)가 따옴표로 감싸져 있습니다("' + item.a + '"). 따옴표 없는 숫자로 바꾸세요.');
+                } else if (!Number.isInteger(item.a)) {
+                    problems.push('a(정답 번호)가 없거나 숫자가 아닙니다.');
+                } else if (oOk && (item.a < 0 || item.a >= item.o.length)) {
+                    if (item.a === item.o.length) {
+                        problems.push('a가 ' + item.a + '입니다. 번호는 0부터 세므로 보기가 ' + item.o.length + '개면 0~' + (item.o.length - 1) + ' 중 하나여야 합니다. 1부터 센 것 같아요(' + item.a + ' → ' + (item.a - 1) + ').');
+                    } else {
+                        problems.push('a가 ' + item.a + '로 보기 범위(0~' + (item.o.length - 1) + ')를 벗어났습니다.');
+                    }
+                }
+
+                if (typeof item.h !== 'string' || !item.h.trim()) {
+                    problems.push('h(힌트)가 없거나 비어 있습니다.');
+                }
+                if (typeof item.e !== 'string' || !item.e.trim()) {
+                    problems.push('e(해설)가 없거나 비어 있습니다.');
+                }
+            }
+
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        
+
+        return { errors: errors, warnings: warnings, valid: valid };
+    }
+
+    /* ---------- 검사 결과 화면 ---------- */
+    function showProblemScreen(opts) {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            if (it.warn) li.className = 'warn';
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startQuiz(list) {
+        allQuestions = list;
+        document.getElementById('problem-screen').style.display = 'none';
+        beginRound(list);
+    }
+
+    // 한 회차 시작: 전체 문제 또는 틀린 문제만 받아서 처음부터 진행
+    function beginRound(list) {
+        questions = list;
+        curIdx = 0;
+        correctFirst = 0;
+        missed = [];
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof quizData === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'quizData를 찾을 수 없습니다. const quizData = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 퀴즈 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '문제와 문제 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateQuizData(quizData);
+
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            startQuiz(result.valid);
+            return;
+        }
+
+        var items = result.errors.map(function (er) { return { tag: er.tag, text: er.text }; })
+            .concat(result.warnings.map(function (w) { return { tag: w.tag, text: w.text, warn: true }; }));
+
+        var badCount = (Array.isArray(quizData) ? quizData.length : 0) - result.valid.length;
+        var hasErrors = result.errors.length > 0;
+
+        showProblemScreen({
+            title: hasErrors ? '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요' : '확인해 볼 곳이 있어요',
+            summary: !hasErrors
+                ? '오류는 아니지만 한 번 확인해 보세요.'
+                : (badCount > 0
+                    ? '전체 ' + quizData.length + '문제 중 ' + badCount + '문제에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                    : '퀴즈 데이터를 확인하고 새로고침하세요.'),
+            items: items,
+            tips: hasErrors ? [
+                '정답 번호 a는 따옴표 없는 숫자이고, 첫 번째 보기가 0입니다',
+                '문제마다 type, q, o, a, h, e 가 모두 있어야 합니다'
+            ] : null,
+            buttonText: result.valid.length > 0
+                ? (hasErrors ? '오류 없는 ' + result.valid.length + '문제만 먼저 풀기' : '그대로 시작하기')
+                : null,
+            onButton: function () { startQuiz(result.valid); }
+        });
+    }
+
+    /* ---------- 퀴즈 진행 ---------- */
+    function loadQuestion() {
+        wrongCount = 0;
+        var q = questions[curIdx];
+
+        document.getElementById('progress-text').textContent = (curIdx + 1) + ' / ' + questions.length;
+        updateScore();
+        window.scrollTo(0, 0);
+        document.getElementById('question-type').textContent = q.type || '일반문제';
+        document.getElementById('question-text').textContent = 'Q' + (allQuestions.indexOf(q) + 1) + '. ' + q.q;
+
+        var container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.o.forEach(function (opt, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = function () { checkAnswer(idx, btn); };
+            container.appendChild(btn);
+        });
+
+        document.getElementById('hint-box').style.display = 'none';
+        document.getElementById('exp-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(idx, btn) {
+        var q = questions[curIdx];
+        var allBtns = document.querySelectorAll('.option-btn');
+
+        if (idx === q.a) {
+            btn.classList.add('correct');
+            allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+            if (wrongCount === 0) { correctFirst++; updateScore(); }
+            showExplanation();
+        } else {
+            wrongCount++;
+            if (wrongCount === 1) missed.push(q);
+            btn.classList.add('wrong');
+            btn.style.pointerEvents = 'none';
+
+            if (wrongCount === 1) {
+                document.getElementById('hint-text').textContent = q.h;
+                document.getElementById('hint-box').style.display = 'block';
+            } else {
+                allBtns[q.a].classList.add('correct');
+                allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+                showExplanation();
+            }
+        }
+    }
+
+    function showExplanation() {
+        var q = questions[curIdx];
+        document.getElementById('exp-text').textContent = q.e;
+        document.getElementById('exp-box').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // 풀던 중에 누르면 한 번 물어봅니다. (묻지 않으려면 if 문 세 줄을 지우세요)
+    function goList() {
+        if (curIdx > 0 && !confirm('퀴즈를 그만하고 목록으로 갈까요?\n지금까지 푼 기록은 저장되지 않아요.')) return;
+        location.href = 'index.html';
+    }
+
+    function nextQuestion() {
+        curIdx++;
+        if (curIdx < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    /* ---------- 점수와 다시 풀기 ---------- */
+    // 한 번에 맞힌 문제만 점수로 셉니다. (힌트를 본 뒤 맞히면 점수에 넣지 않아요)
+    function updateScore() {
+        document.getElementById('score-text').textContent = '한 번에 맞힌 문제 ' + correctFirst + '개';
+    }
+
+    function showResult() {
+        var total = questions.length;
+        var score = Math.round(correctFirst / total * 100);
+        var isRetry = total < allQuestions.length;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-title').textContent = isRetry ? '🔁 틀린 문제 복습을 마쳤습니다!' : '🎊 학습을 마쳤습니다!';
+        document.getElementById('result-score').textContent = score + '점';
+        document.getElementById('result-detail').textContent =
+            (isRetry ? '복습한 ' : '전체 ') + total + '문제 중 한 번에 맞힌 문제 ' + correctFirst + '개 (100점 만점)';
+
+        var msg;
+        if (score >= 90) msg = '진짜 수고 많이 하셨습니다, 학우님! A+ 당근 🥕';
+        else if (score >= 70) msg = '잘하고 계세요! 틀린 문제만 한 번 더 풀면 더 단단해져요.';
+        else msg = '괜찮아요. 틀린 문제를 해설과 함께 다시 풀어 보면 금방 늘어요.';
+        document.getElementById('result-msg').textContent = msg;
+
+        var details = document.getElementById('missed-details');
+        var list = document.getElementById('missed-list');
+        list.innerHTML = '';
+        missed.forEach(function (m) {
+            var li = document.createElement('li');
+            li.value = allQuestions.indexOf(m) + 1;
+            li.textContent = m.q;
+            list.appendChild(li);
+        });
+        details.open = false;
+        details.style.display = missed.length ? 'block' : 'none';
+        document.getElementById('missed-summary').textContent = '이번에 틀린 문제 ' + missed.length + '개 보기';
+
+        var retryBtn = document.getElementById('retry-missed-btn');
+        retryBtn.textContent = '❌ 틀린 문제만 다시 풀기 (' + missed.length + '문제)';
+        retryBtn.style.display = missed.length ? 'block' : 'none';
+
+        window.scrollTo(0, 0);
+    }
+
+    function retryAll() { beginRound(allQuestions); }
+    function retryMissed() { if (missed.length) beginRound(missed.slice()); }
+
+    init();
+</script>
+</body>
+</html>

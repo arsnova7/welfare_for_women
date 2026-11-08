@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여성복지론 퀴즈</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #b45309;
+        --bg-gray: #f4f6f8;
+        --success: #28a745;
+        --danger: #dc3545;
+    }
+    body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-gray); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 700px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 1.8rem; color: #14213d; font-weight: 800; margin-bottom: 10px; word-break: keep-all; }
+    .header p { color: #55657d; font-weight: bold; font-size: 1.1rem; margin: 0; }
+    .header .score-text { margin-top: 6px; color: #166534; font-size: 1rem; }
+
+    .quiz-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .q-type { display: inline-block; background: #e0e7f1; color: #14213d; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 15px; font-weight: 700; }
+    #question-text { font-weight: bold; font-size: 1.2rem; margin-bottom: 25px; word-break: keep-all; line-height: 1.4; color: #14213d; }
+
+    .option-btn { width: 100%; text-align: left; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; transition: 0.2s; line-height: 1.4; color: #2f3640; font-weight: 500; font-family: inherit; }
+    .option-btn:hover { background: #fff7ed; border-color: var(--primary); }
+    .option-btn:focus-visible, .btn-next:focus-visible, .result-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+    .option-btn.correct { background: #e6fffa; border-color: var(--success); color: var(--success); font-weight: bold; }
+    .option-btn.wrong { background: #fff5f5; border-color: var(--danger); color: var(--danger); opacity: 0.6; }
+
+    .btn-next { width: 100%; padding: 16px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; margin-top: 25px; display: none; font-size: 1.1rem; transition: 0.2s; font-family: inherit; }
+    .btn-next:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .hint-box, .exp-box { padding: 18px; border-radius: 10px; margin-top: 15px; display: none; line-height: 1.6; word-break: keep-all; font-size: 0.95rem; }
+    .hint-box { background: #fffbeb; border: 1px solid #fbd38d; color: #b45309; }
+    .exp-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+
+    .result-card { background: white; border-radius: 20px; padding: 40px; text-align: center; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .result-btn { width: 100%; padding: 16px; margin: 10px 0; border: 1.5px solid #e0e7f1; border-radius: 10px; background: white; cursor: pointer; font-size: 1.05rem; font-weight: bold; transition: 0.2s; font-family: inherit; }
+    .result-btn:hover { background: #f3f6fa; }
+    .result-score { margin: 6px 0 4px; font-size: 3.4rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+    .result-detail { margin: 0 0 10px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    #result-msg { margin: 0 0 18px; line-height: 1.6; word-break: keep-all; color: #14213d; font-weight: 600; }
+    .missed { text-align: left; margin: 0 0 18px; padding: 10px 16px; border: 1px solid #e0e7f1; border-radius: 10px; }
+    .missed summary { cursor: pointer; font-weight: 700; color: #14213d; padding: 4px 0; }
+    .missed ol { margin: 10px 0 4px; padding-left: 26px; font-size: 0.95rem; line-height: 1.55; word-break: keep-all; color: #2f3640; }
+    .missed li { margin-bottom: 8px; }
+
+    /* 문제 화면 아래의 목록으로 돌아가기 버튼 */
+    .list-btn { width: 100%; padding: 14px; margin-top: 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: white; color: #14213d; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .list-btn:hover { background: #f3f6fa; }
+    .list-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+
+    /* 데이터 검사 결과 화면 */
+    .problem-card { display: none; background: white; border-radius: 15px; padding: 28px; border-left: 6px solid var(--danger); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .problem-card h2 { margin: 0 0 8px; font-size: 1.3rem; color: #14213d; }
+    .problem-card .summary { margin: 0 0 16px; color: #55657d; line-height: 1.6; word-break: keep-all; }
+    .problem-list { list-style: none; margin: 0 0 8px; padding: 0; }
+    .problem-list li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid #e0e7f1; line-height: 1.5; word-break: keep-all; }
+    .problem-list .tag { flex: none; min-width: 3.2rem; font-weight: 800; color: var(--danger); }
+    .problem-list .warn .tag { color: var(--primary); }
+    .problem-card .tips { margin: 12px 0 0; padding: 14px; background: #f3f6fa; border-radius: 10px; font-size: 0.92rem; line-height: 1.6; color: #2f3640; word-break: keep-all; }
+    .problem-card .tips ul { margin: 6px 0 0; padding-left: 20px; }
+    #partial-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: bold; font-size: 1.05rem; cursor: pointer; font-family: inherit; }
+    #partial-btn:focus-visible { outline: 3px solid #14213d; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="problem-screen" class="problem-card" role="alert">
+        <h2 id="problem-title"></h2>
+        <p id="problem-summary" class="summary"></p>
+        <ul id="problem-list" class="problem-list"></ul>
+        <div id="problem-tips" class="tips"></div>
+        <button id="partial-btn" type="button"></button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="header">
+            <h1 id="lecture-title"></h1>
+            <p id="progress-text"></p>
+            <p id="score-text" class="score-text"></p>
+        </div>
+        <div class="quiz-box">
+            <div id="question-type" class="q-type">개념확인</div>
+            <div id="question-text"></div>
+            <div id="options-container"></div>
+
+            <div id="hint-box" class="hint-box">💡 <b>힌트:</b> <span id="hint-text"></span></div>
+            <div id="exp-box" class="exp-box">✅ <b>정답 및 해설:</b> <span id="exp-text"></span></div>
+
+            <button id="next-btn" class="btn-next" type="button" onclick="nextQuestion()">다음 문제로</button>
+        </div>
+
+        <button class="list-btn" type="button" onclick="goList()">🏠 목록으로 돌아가기</button>
+    </div>
+
+    <div id="result-screen" class="result-card">
+        <h2 id="result-title">🎊 학습을 마쳤습니다!</h2>
+        <p id="result-score" class="result-score"></p>
+        <p id="result-detail" class="result-detail"></p>
+        <p id="result-msg"></p>
+        <details id="missed-details" class="missed">
+            <summary id="missed-summary"></summary>
+            <ol id="missed-list"></ol>
+        </details>
+        <button id="retry-missed-btn" class="result-btn" type="button" style="background:var(--primary); color:white; border:none;" onclick="retryMissed()"></button>
+        <button class="result-btn" type="button" onclick="retryAll()">🔄 처음부터 다시 풀기</button>
+        <button class="result-btn" type="button" onclick="location.href='index.html'">🏠 목록으로 돌아가기</button>
+    </div>
+</div>
+
+<!-- ① 오류 수집용: 반드시 맨 위(②, ③보다 앞)에 두세요. 수정하지 마세요. -->
+<script>
+    window.__dataErrors = [];
+    window.addEventListener('error', function (e) {
+        window.__dataErrors.push({ msg: e.message, line: e.lineno });
+    });
+</script>
+
+<!-- ② 장 설정: 새 장을 만들 때 번호와 제목만 고치세요. -->
+<script>
+    const LECTURE = { no: 14, title: "현안 및 쟁점분석" };
+</script>
+
+<!-- ③ 퀴즈 데이터: 노트북LM이 만든 const quizData = [...]; 를 통째로 덮어쓰세요.
+     아래 1문항은 화면 확인용 예시입니다. 덮어쓸 때 이 예시도 같이 지우세요.
+     문제마다 type, q, o, a, h, e 가 모두 있어야 하고, a는 첫 번째 보기가 0입니다. -->
+<script>
+    const quizData = [
+        {
+            "type": "개념확인",
+    "q": "다문화 가구에 대한 설명으로 옳지 않은 것은? [워크북 p.157, 2025 기말]",
+    "o": [
+      "다문화 가구에는 귀화자, 결혼이민자, 다문화자녀 가구 등이 포함된다.",
+      "다문화 대상자의 국적 구성은 베트남, 중국 등 특정 국가에 집중되는 경향이 있다.",
+      "다문화 가구 구성원은 모두 외국 국적이어야 한다.",
+      "다문화 가구의 수는 최근 몇 년간 지속적으로 증가하는 추세이다."
+    ],
+    "a": 2,
+    "h": "다문화 가구는 내국인(귀화자 포함) 배우자 및 자녀가 포함되므로 전원 외국 국적일 필요가 없음을 파악하세요.",
+    "e": "다문화 가구는 국적법상 귀화자, 결혼이민자, 외국인 구성원과 함께 대한민국 국적의 배우자나 자녀를 포함하는 가구이므로 모든 구성원이 외국 국적이어야 하는 것은 아닙니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "탈 코르셋(Anti-Corset) 운동에 대한 설명으로 적절하지 않은 것은? [워크북 p.157, 2025 기말]",
+    "o": [
+      "외모 규범, 성적 대상화, 성별 역할 규범을 거부하는 사회적·문화적 운동이다.",
+      "'코르셋'은 화장, 다이어트, 성형 등 외모 규범을 강제하는 문화를 상징한다.",
+      "2010년대 후반 한국에서 페미니즘 확산과 함께 대중화되었다.",
+      "외모 규범을 개인 선택의 문제로만 보며, 사회적 압력의 문제를 다루지 않는다."
+    ],
+    "a": 3,
+    "h": "탈코르셋 운동은 외모 가꾸기를 개인의 사적 취향이 아닌 사회적으로 강요된 성차별 억압 구조로 비판함을 확인하세요.",
+    "e": "탈코르셋 운동은 단순한 외모 가꾸기 거부를 넘어, 여성에게 화장·성형·다이어트 등을 강제하는 사회적 억압과 성차별적 구조를 비판적으로 문제 삼는 운동입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회의 이주여성 현황에 대한 설명으로 적절하지 않은 것은? [워크북 p.158]",
+    "o": [
+      "결혼이주여성과 이주노동여성이 복지정책의 주요 대상으로 여겨진다.",
+      "가정 내 폭력 상황에서도 체류자격과 권리가 안정적으로 보호되는 편이다.",
+      "비공식 부문에서 일하는 비율이 높아 노동권 침해나 노동착취 위험에 쉽게 노출된다.",
+      "언어·문화 차이로 인해 양육 및 교육 부담이 크고, 사회적 고립을 경험하기 쉽다."
+    ],
+    "a": 1,
+    "h": "결혼이민비자(F-6) 등 체류자격이 남편에게 종속되어 폭력을 겪어도 이혼이나 신고를 주저하게 되는 법적 취약성을 떠올리세요.",
+    "e": "결혼이주여성은 체류자격 연장 및 신원보증이 배우자(남편)에게 종속되어 있어 가정 폭력에 노출되더라도 체류자격 상실 우려로 법적·사회적 보호를 받기 어려운 구조적 취약성을 지닙니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성혐오(Misogyny)의 개념에 대한 설명으로 가장 적절한 것은? [워크북 p.158]",
+    "o": [
+      "주로 개인 차원의 정서적 싫어함만을 지칭하며 사회구조와는 무관하다.",
+      "여성에 대한 부정적 인식과 차별적 태도가 언어를 통해 사회 전반으로 확산·재생산된다.",
+      "오프라인에서만 주로 나타나는 현상이며 온라인에서의 발생은 드물다.",
+      "농담이나 유행어로 사용될 경우 사회적 영향력이 미미하다."
+    ],
+    "a": 1,
+    "h": "여성혐오는 개인의 단순 감정을 넘어 사회 구조 속에서 여성을 열등하게 통제하려는 태도이며 언어가 이를 강화함을 보세요.",
+    "e": "여성혐오는 사회 구조 속에서 여성을 열등하게 취급하고 통제하려는 태도 및 이념이며, 여성혐오 언어는 농담이나 유행어의 탈을 쓰고 차별적 권력관계를 내면화하는 기제로 작용합니다."
+  },
+  {
+    "type": "인과관계",
+    "q": "여성혐오 언어가 사회적으로 확산되게 된 원인으로 보기 어려운 것은? [워크북 p.158-159]",
+    "o": [
+      "온라인 미디어에서 재현되는 여성 이미지에 의해 성별 고정관념이 완화됨",
+      "젠더 평등 담론의 확산에 따른 기존 기득권층의 반발(백래시) 발생",
+      "경쟁적 신자유주의로 인한 사회적 불안과 상대적 박탈감이 젠더 갈등으로 표출됨",
+      "온라인 익명성을 기반으로 혐오 표현이 유희화되고 상업화됨"
+    ],
+    "a": 0,
+    "h": "미디어의 정형화·왜곡된 여성 재현은 성별 고정관념을 '완화'하는 것이 아니라 오히려 '강화'시킴을 주의하세요.",
+    "e": "방송, 광고, SNS 등 미디어가 여성을 부정적이거나 정형화된 이미지로 반복 재현하는 것은 성별 고정관념을 강화하고 여성혐오를 재생산하는 원인이 됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "이주 사유 및 목적에 따라 구별되는 이주여성의 4가지 주요 유형에 해당하지 않는 것은? [교재 p.340, 워크북 p.150]",
+    "o": [
+      "결혼이주여성",
+      "이주노동여성",
+      "유학 및 연구 여성, 난민 여성",
+      "세습적 자산가 이주여성"
+    ],
+    "a": 3,
+    "h": "결혼, 노동, 유학/연구, 난민 등 4가지가 이주 사유에 따른 주요 분류입니다.",
+    "e": "이주여성은 이주 사유에 따라 한국인 배우자와의 혼인으로 이주한 결혼이주여성, 일자리를 찾아온 이주노동여성, 학업 및 연구 목적의 유학·연구 여성, 전쟁·폭력을 피해 이주한 난민 여성으로 구분됩니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "한국에서 결혼이주여성이 한국인 배우자와의 혼인을 통해 취득하는 대표적인 체류 자격 비자는? [교재 p.340, 워크북 p.150]",
+    "o": [
+      "결혼이민비자 (F-6)",
+      "단기방문비자 (C-3)",
+      "비전문취업비자 (E-9)",
+      "재외동포비자 (F-4)"
+    ],
+    "a": 0,
+    "h": "대한민국 국민의 배우자 자격으로 체류하는 F-6 비자입니다.",
+    "e": "한국인 배우자와 결혼하여 입국하는 결혼이주여성은 F-6(결혼이민) 비자를 발급받아 거주하게 됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "2000년대 이후 한국 사회가 '다문화사회'로 급격히 전환되게 된 결정적 배경 2가지는? [교재 p.340, 워크북 p.150]",
+    "o": [
+      "농촌 미혼 남성의 결혼난 & 상업적 국제결혼 중개업의 급증",
+      "국내 모든 공장제 제조시설의 100% 해외 이전",
+      "국민연금 보험료율의 50% 인상",
+      "해외 유학파 출신 국회의원 공천 의무화"
+    ],
+    "a": 0,
+    "h": "2000년대 초 농촌 미혼 남성의 성비 불균형 및 결혼난과 상업적 중개업체의 급증이 결합한 현상입니다.",
+    "e": "2000년대 이후 농촌 미혼 남성의 결혼난 심화와 국제결혼 중개업의 상업화가 맞물리면서 아시아 국가 중심의 결혼이주여성이 급증하여 다문화사회로 전환되었습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "2024년 통계 기준 대한민국 전체 혼인 건수 중 '국제결혼'이 차지하는 비율은? [교재 p.341, 워크북 p.150]",
+    "o": [
+      "약 7~8% (2023년 다문화 혼인 비중은 10.6%)",
+      "약 0.1%",
+      "약 50%",
+      "약 90%"
+    ],
+    "a": 0,
+    "h": "전체 혼인의 약 7~8% 수준이며 다문화 혼인 통계 비중은 10% 안팎입니다.",
+    "e": "한국의 국제결혼은 2000년대 초반 급증한 이후 2024년 기준 전체 혼인의 약 7~8%(2023년 다문화 혼인 비중 10.6%)를 차지하고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국으로 이주하는 결혼이주여성의 주요 출신 국가지역의 공통적 특징은? [교재 p.341, 워크북 p.150-151]",
+    "o": [
+      "베트남, 중국(한국계 포함), 필리핀, 캄보디아 등 아시아 국가 중심",
+      "영국, 프랑스, 독일 등 서유럽 국가 중심",
+      "미국, 캐나다 등 북미 국가 중심",
+      "브라질, 아르헨티나 등 남미 국가 중심"
+    ],
+    "a": 0,
+    "h": "베트남, 중국, 필리핀, 캄보디아 등 아시아 지역 출신이 압도적 다수를 차지합니다.",
+    "e": "한국 결혼이주여성의 출신 국가는 베트남, 중국(한국계 중국인 포함), 필리핀, 캄보디아 등 주로 아시아 국가에 집중되어 있습니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "이주여성을 대상으로 한국어 교육, 가족상담, 자녀 양육 지원, 폭력 피해 지원 등을 수행하는 대표적 전담 기관은? [교재 p.341, 워크북 p.151]",
+    "o": [
+      "다문화가족지원센터 (시군구 가족센터)",
+      "국민연금공단 지사",
+      "한국은행 금융센터",
+      "지방 노동위원회"
+    ],
+    "a": 0,
+    "h": "여성가족부 산하에서 결혼이주여성과 다문화가족을 종합 지원하는 센터입니다.",
+    "e": "전국 시·군·구에 설치된 다문화가족지원센터(현 가족센터)는 결혼이주여성의 한국 사회 정착, 언어 교육, 자녀 양육 및 상담 지원을 종합적으로 제공합니다."
+  },
+  {
+    "type": "인과관계",
+    "q": "결혼이주여성이 가정 내 폭력을 겪으면서도 쉽게 이혼이나 신고를 하지 못하는 구조적 원인은? [교재 p.341-342, 워크북 p.151]",
+    "o": [
+      "언어장벽과 함께 체류자격(F-6) 연장 및 국적 취득 시 한국인 남편의 신원보증과 협조에 전적으로 의존해야 하기 때문",
+      "이주여성 전원에게 법적으로 매월 1억 원의 이혼 보상금이 지급되기 때문",
+      "이주여성이 가정폭력 처벌법의 적용 대상에서 원천 배제되어 있기 때문",
+      "남편이 경찰청장 직인을 직접 소지하고 있기 때문"
+    ],
+    "a": 0,
+    "h": "남편의 신원보증에 체류자격이 종속되어 체류자격 상실 및 강제출국 위험에 노출되는 구조 때문입니다.",
+    "e": "결혼이주여성은 신원보증 및 체류자격 연장에서 남편에 대한 의존성이 높아, 폭력을 당하더라도 이혼 시 체류자격을 잃고 본국으로 송환될까 봐 폭력을 참게 되는 불평등한 지위에 놓입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "이주노동여성이 주로 취업하여 종사하는 노동시장의 특징은? [교재 p.342, 워크북 p.151]",
+    "o": [
+      "식당, 요양보호, 청소, 농축산업, 제조업 등 비공식적·저임금·불안정 노동 부문에 집중됨",
+      "대기업 총괄 CEO 및 연구소 소장 직급에 90% 배치됨",
+      "국립대학교 정교수 직렬에만 고용됨",
+      "금융 증권가의 자산운용펀드 매니저에 독점 취업함"
+    ],
+    "a": 0,
+    "h": "돌봄, 서비스, 식당, 청소, 제조업 등 3D 저임금 취약 노동에 집중되는 현실입니다.",
+    "e": "이주노동여성은 식당, 요양원, 청소, 농가 등 비공식 부문이나 저임금 단순 노동에 주로 종사하며 최저임금 미지급, 산재, 성희롱 등 노동권 침해 위험에 쉽게 노출됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "결혼이주여성이 경험하는 4대 주요 사회적 위험 이슈에 해당하지 않는 것은? [교재 p.341-343, 워크북 p.151]",
+    "o": [
+      "가정 내 폭력 및 법적 지위의 불안정성",
+      "경제적 빈곤과 노동 착취",
+      "자녀 양육·교육 문제 및 문화적 고립·사회적 배제",
+      "국가 재정 총괄 집행권의 무제한 독점"
+    ],
+    "a": 3,
+    "h": "체류 불안정, 노동 착취, 자녀 교육 부담, 사회적 배제가 4대 핵심 이슈입니다.",
+    "e": "이주여성이 마주하는 4대 이슈는 ① 가정 폭력 및 체류 불안정, ② 비공식 노동과 착취, ③ 자녀 양육·학교 부적응, ④ 지역사회에서의 문화적 고립과 낙인입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "2023년 통계청 「인구총조사」 기준 대한민국 전국 '다문화 가구 수' 통계 수치는? [교재 p.343, 워크북 p.151]",
+    "o": [
+      "약 41만 5,584 가구 (지속적 증가 추세)",
+      "약 1,000 가구",
+      "약 1,000만 가구",
+      "0 가구"
+    ],
+    "a": 0,
+    "h": "2019년 약 35만 가구에서 2023년 약 41만 5천 가구로 매년 꾸준히 증가하고 있습니다.",
+    "e": "통계청 조사에 따르면 전국 다문화 가구 수는 2019년 35만 3천 가구에서 2023년 41만 5,584 가구로 지속 성장하고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "2023년 기준 다문화 가구의 가구 구성비 중 가장 높은 비중(43.1%)을 차지하는 가구 유형은? [교재 p.344, 워크북 p.151]",
+    "o": [
+      "귀화자 가구",
+      "결혼이민자 가구 (37.0%)",
+      "다문화 자녀 가구 (11.3%)",
+      "단독 외국인 가구"
+    ],
+    "a": 0,
+    "h": "대한민국 국적을 취득한 귀화자가 속한 가구(43.1%)가 가장 높은 비율입니다.",
+    "e": "2023년 다문화 가구 구성비는 귀화자 가구가 43.1%로 가장 높고, 결혼이민자 가구가 37.0%, 다문화 자녀 가구가 11.3% 순을 나타냅니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회의 최근 경제적 변화(저성장, 기회 축소) 속에서 사회적 약자나 이주민을 향해 표출되는 심리적 기제는? [교재 p.345, 워크북 p.152]",
+    "o": [
+      "경쟁 심화와 보상 불투명성에서 비롯된 좌절감이 사회적 약자에 대한 '상대적 박탈감'과 '혐오'로 표출됨",
+      "이주민 전원에 대한 100% 무조건적 재산 증여",
+      "모든 국민의 사회적 상호 신뢰도가 100배 상승함",
+      "노동시장의 모든 차별과 격차가 자동으로 소멸함"
+    ],
+    "a": 0,
+    "h": "청년층의 노력 대비 적은 보상과 불평등 속에서 사회적 약자가 복지 혜택을 뺏어간다고 느끼는 상대적 박탈감과 혐오입니다.",
+    "e": "저성장과 극심한 경쟁 속에서 구성원들이 느끼는 불만과 좌절감은, 복지 수혜자로 인식되는 이주여성 등 약자를 향한 상대적 박탈감과 혐오 표현으로 왜곡 표출되기도 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "사회학에서 정의하는 '여성혐오(Misogyny)'의 본질적 의미로 옳은 것은? [교재 p.346, 워크북 p.152]",
+    "o": [
+      "단순히 여성을 싫어하는 개인적 감정을 넘어, 사회구조 속에서 여성을 열등하게 취급하고 통제하려는 태도 및 이념",
+      "여성이 남성을 경제적으로 통제하는 사상",
+      "모든 남성을 법적으로 감옥에 수감시키는 정책",
+      "여성 근로자에게만 매월 보조금을 지급하는 시혜적 제도"
+    ],
+    "a": 0,
+    "h": "단순 정서적 싫어함을 넘어 가부장적 구조하에서 여성을 하위체계로 통제하려는 태도입니다.",
+    "e": "여성혐오는 여성을 향한 개인의 정서적 호오(好惡)를 넘어, 여성을 남성보다 하위의 열등한 존재로 규정하고 가부장적 질서 속에 통제하려는 태도와 사회적 기제입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성혐오 언어의 5가지 주요 유형 중 '된장녀', '김치녀'처럼 여성의 외모 관리나 소비를 허영으로 폄하하는 유형은? [교재 p.346, 워크북 p.152]",
+    "o": [
+      "소비 행태 비하형",
+      "모성 및 가정 역할 고정형",
+      "성적 대상화형",
+      "사회참여 폄하형"
+    ],
+    "a": 0,
+    "h": "여성의 사치나 소비 활동을 폄하하는 소비 행태 비하형 언어입니다.",
+    "e": "소비 행태 비하형은 2000년대 중후반 유행한 '된장녀', '김치녀' 등 여성의 외모·소비 활동을 사치와 허영으로 낙인찍어 비하하는 혐오 언어 유형입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성혐오 언어 중 어머니 집단을 '벌레 충(蟲)' 자와 결합하여 사람 이하의 존재로 비인격화하는 용어 '맘충'이 속하는 유형은? [교재 p.347, 워크북 p.152]",
+    "o": [
+      "모성 및 가정 역할 고정(비하)형",
+      "소비 행태 비하형",
+      "성적 대상화형",
+      "디지털 혐오문화형"
+    ],
+    "a": 0,
+    "h": "여성을 엄마·아내 역할로만 한정하고 이를 비하·비인격화하는 모성 역할 고정형입니다.",
+    "e": "모성 및 가정 역할 고정(비하)형은 가사·육아를 여성의 본질로 묶어두면서, 어머니들을 통칭해 '맘충'이라 비하하는 등 대상을 몰인격화하는 혐오 표현입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "방송, 광고, 온라인 댓글 등에서 여성의 외모와 신체를 평가하고 성적 가치로 환원하는 혐오 언어 유형은? [교재 p.347, 워크북 p.152]",
+    "o": [
+      "성적 대상화형",
+      "사회참여 폄하형",
+      "소비 행태 비하형",
+      "모성 역할 고정형"
+    ],
+    "a": 0,
+    "h": "여성의 인간적 존엄 대신 몸과 외모의 성적 가치만을 평가하는 성적 대상화형입니다.",
+    "e": "성적 대상화형은 여성의 신체와 외모에 등급을 매기거나 평가하여 여성의 존재를 성적 도구로 환원시키는 혐오 언어 형태입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "페미니즘이나 여성운동 등 여성의 사회적 발언과 활동을 '페미OO', 'OO나치' 등으로 극단적 낙인찍는 혐오 언어 유형은? [교재 p.347, 워크북 p.152-153]",
+    "o": [
+      "사회참여 폄하형",
+      "성적 대상화형",
+      "소비 행태 비하형",
+      "디지털 혐오문화형"
+    ],
+    "a": 0,
+    "h": "여성 권리 주장 및 사회적 발언을 조롱·왜곡하여 폄하하는 사회참여 폄하형입니다.",
+    "e": "사회참여 폄하형은 성평등을 위한 페미니즘 운동과 여성의 공적 발언을 극단주의(나치 등)로 왜곡·낙인시켜 여성의 권리 주장을 봉쇄하려는 혐오 표현입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "익명 커뮤니티를 중심으로 혐오를 '밈(meme)'이나 '짤'의 형태로 유희화하고 댓글로 확산시키는 혐오 유형은? [교재 p.347-348, 워크북 p.153]",
+    "o": [
+      "디지털 혐오문화형",
+      "모성 역할 고정형",
+      "소비 행태 비하형",
+      "성적 대상화형"
+    ],
+    "a": 0,
+    "h": "온라인 익명 커뮤니티에서 밈과 짤을 타고 놀이처럼 소비되는 디지털 혐오문화형입니다.",
+    "e": "디지털 혐오문화형은 익명 커뮤니티에서 차별적 언어를 밈, 짤, 유행어 형태로 가볍게 소비하며 혐오를 일상적 유희로 정착시키는 형태입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "온라인 자극적 콘텐츠가 조회수를 올리고 광고 수익으로 직결되는 구조에서 혐오 발언이 상업적 이익과 결합하는 현상은? [교재 p.348-349, 워크북 p.153]",
+    "o": [
+      "혐오 경제 (Economy of Hate) 및 조회수 경제",
+      "공유 경제",
+      "순환 경제",
+      "자선 경제"
+    ],
+    "a": 0,
+    "h": "SNS와 유튜브에서 조회수를 높이기 위해 젠더·세대 갈등과 혐오를 부추겨 수익을 창출하는 '혐오 경제' 구조입니다.",
+    "e": "SNS와 플랫폼 미디어는 자극적 분노와 갈등일수록 높은 조회수를 기록해 광고 수익을 얻는 구조여서, 혐오 표현이 상업적 이익을 낳는 '혐오 경제'를 형성하게 됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "성평등 인식이 증진되고 여성의 권리가 확대됨에 따라, 기존 기득권 집단이 위협감을 느끼고 반발하여 표출하는 현상은? [교재 p.349, 워크북 p.153]",
+    "o": [
+      "백래시 (Backlash / 반발 현상)",
+      "스필오버 (Spillover)",
+      "레버리지 (Leverage)",
+      "젠더 쿼터제"
+    ],
+    "a": 0,
+    "h": "성평등 담론에 대해 기존 특권을 빼앗긴다고 느끼는 집단의 저항과 반발인 백래시(Backlash)입니다.",
+    "e": "백래시(Backlash)는 여성 인권 신장과 성평등 정책 추진에 대해 기존 가부장적 특권을 누려온 기득권 측이 반발하여 여성에 대한 혐오와 조롱으로 저항하는 사회적 현상입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "청년층이 여성혐오 언어에 지속적으로 노출될 경우 여성복지 관점에서 우려되는 치명적 결과는? [교재 p.350, 워크북 p.153]",
+    "o": [
+      "청년층의 '젠더 감수성'이 저하되고 성평등 가치가 심각하게 왜곡됨",
+      "모든 청년이 대기업 정규직으로 100% 취업함",
+      "국가 성평등 지수가 세계 1위로 상승함",
+      "청년층의 연금 납부액이 10배 증가함"
+    ],
+    "a": 0,
+    "h": "혐오 언어 노출이 젠더 감수성을 마비시키고 성차별을 정당한 것으로 왜곡 인식하게 만듭니다.",
+    "e": "청소년과 청년 세대가 온라인 혐오 언어에 일상적으로 노출되면 성차별적 인식을 무감각하게 받아들이게 되어 젠더 감수성이 저하되고 사회적 연대가 파괴됩니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "여성복지 관점에서 여성혐오 언어 및 차별을 극복하기 위해 제시되는 4대 대응책에 해당하지 않는 것은? [교재 p.350, 워크북 p.153]",
+    "o": [
+      "학교·직장 내 젠더 감수성 교육 강화",
+      "디지털 시민교육을 통한 온라인 언어문화 개선",
+      "미디어 책임성 강화 및 세대 간 대화 촉진 프로그램 확산",
+      "여성의 모든 사회적 발언과 언론 출입을 법적으로 통제"
+    ],
+    "a": 3,
+    "h": "젠더 감수성 교육, 디지털 시민교육, 미디어 책임성, 세대 간 대화 촉진의 4가지 대응 방안입니다.",
+    "e": "혐오사회 극복을 위한 대응책은 젠더 감수성 교육, 디지털 시민교육, 자극적 보도를 제재하는 미디어 책임성 강화, 남녀 모두가 소통하는 세대 간 대화 촉진입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "개인의 소득, 학력, 직업, 자산 등 사회·경제적 지위를 이유로 차별하고 '흙수저', '개·돼지' 등으로 비하하는 차별 유형은? [교재 p.351, 워크북 p.153]",
+    "o": [
+      "계급 차별 (Class Discrimination)",
+      "연령 차별 (Ageism)",
+      "인종 차별 (Racial Discrimination)",
+      "성별 차별 (Sex Discrimination)"
+    ],
+    "a": 0,
+    "h": "경제적 부와 신분 지위에 따라 타인을 비하하는 계급 차별입니다.",
+    "e": "계급 차별은 사회·경제적 신분과 소득 격차를 근거로 불이익을 주거나 멸시하는 행위로 '돈도 실력', '개·돼지' 등 상층의 오만이나 하층 비하 표현으로 나타납니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "사람을 나이 때문에 고정관념과 편견의 대상으로 삼아 '꼰대', '젊꼰' 등으로 비하하고 세대 갈등을 낳는 차별은? [교재 p.351-352, 워크북 p.153]",
+    "o": [
+      "연령 차별 (Ageism)",
+      "인종 차별",
+      "계급 차별",
+      "성적 지향 차별"
+    ],
+    "a": 0,
+    "h": "나이를 이유로 고령층이나 청년층을 비하·조롱하는 연령 차별(Ageism)입니다.",
+    "e": "연령 차별(Ageism)은 나이를 기준으로 특정 연령대(노년층의 꼰대화, 청년층의 무능화 등)에 편견을 씌워 비하함으로써 세대 간 연대를 해치는 차별입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "개인의 피부색, 민족, 출신국, 문화적 배경을 이유로 차별·배제하며 대림동 지역 등에서 표출된 차별 유형은? [교재 p.352, 워크북 p.154]",
+    "o": [
+      "인종·민족 차별 (Racial Discrimination)",
+      "계급 차별",
+      "연령 차별",
+      "학력 차별"
+    ],
+    "a": 0,
+    "h": "피부색과 출신 국가를 근거로 이주민과 외국인을 배제하는 인종 차별입니다.",
+    "e": "인종·민족 차별은 출신 국적, 피부색, 문화적 차이를 이유로 특정 집단을 배척하고 불평등하게 처우하는 사회적 배제 행위입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "사회적 혐오가 증가하게 된 '구조적·제도적 요인'으로 올바른 것은? [교재 p.352-353, 워크북 p.154]",
+    "o": [
+      "자본과 권력의 특정 집단 집중으로 인한 기회 불균형 & 교차 차별을 고려하지 못한 제도적 사각지대와 사회 이동성 제한",
+      "모든 국민에게 법적 기본소득이 연 10억 원씩 지급되기 때문",
+      "모든 정당이 100% 성평등 공천을 달성했기 때문",
+      "학교 교육에서 차별 금지가 100% 완벽히 실행되기 때문"
+    ],
+    "a": 0,
+    "h": "기회의 불균형, 차별금지법의 집행력 부족 등 제도적 사각지대와 부모 계급에 의한 사회 이동성 고착이 원인입니다.",
+    "e": "혐오 증대의 구조적 요인은 자본·권력의 독점, 젠더·인종·계급의 교차성을 반영하지 못한 제도적 사각지대, 부모의 지위가 자녀를 결정하는 세습적 불평등 구조입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "사회적 혐오가 증가하게 된 '문화적·사회적 요인'에 대한 설명으로 옳은 것은? [교재 p.353, 워크북 p.154]",
+    "o": [
+      "성별·연령·인종에 대한 사회적 고정관념과 끊임없는 타인과의 비교·경쟁 문화가 상대적 박탈감을 낳기 때문",
+      "우리 사회에 타인에 대한 관용과 수용성이 전 세계에서 가장 높기 때문",
+      "모든 미디어가 혐오 표현을 100% 자율 검열하기 때문",
+      "경쟁 문화가 완전 소멸하여 서열화가 사라졌기 때문"
+    ],
+    "a": 0,
+    "h": "내재된 고정관념과 함께 생존 경쟁 속에서 타인과 비교하며 뒤처진 약자를 낙인찍는 서열 문화 때문입니다.",
+    "e": "문화적 요인은 특정 집단에 대한 내재적 선입견과 함께, 서열화된 생존 경쟁 속에서 타인과의 비교를 통해 상대적 박탈감을 해소하고자 약자를 배제하는 문화입니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "사회적 혐오가 증가하게 된 '기술·미디어적 요인' 중 '알고리즘 편향(Algorithm Bias)'의 위험성은? [교재 p.354, 워크북 p.154]",
+    "o": [
+      "AI 추천 플랫폼이 사용자의 기존 편견과 혐오 콘텐츠만을 반복 추천하여 편향된 정보 갇힘(에코 챔버) 현상을 강화함",
+      "AI가 성차별적 단어를 자동으로 삭제하여 성평등을 100% 완수함",
+      "알고리즘이 모든 사용자의 통장 잔고를 10배 늘려줌",
+      "SNS 이용자의 시력이 비약적으로 좋아짐"
+    ],
+    "a": 0,
+    "h": "AI 추천 시스템이 사용자가 선호하는 자극적 혐오 콘텐츠를 지속 노출시켜 편견을 고착화하는 에코 챔버 위험입니다.",
+    "e": "알고리즘 편향은 인공지능이 기존의 차별 데이터를 학습하고 사용자에게 편향된 혐오 콘텐츠만을 확증 편향적으로 계속 추천하여 사회적 차별 구조를 공고화합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성들이 사회적·문화적 압력에 의해 강요되는 외모 기준, 성적 대상화, 성별 역할 규범을 거부하고 자신을 자연스럽게 표현하려는 운동은? [교재 p.354-355, 워크북 p.154-155]",
+    "o": [
+      "탈 코르셋 운동 (Anti-Corset Movement)",
+      "서프러제트 운동",
+      "두루누리 운동",
+      "미니멀리즘 운동"
+    ],
+    "a": 0,
+    "h": "화장, 성형, 다이어트 등 강요된 외모 억압에서 벗어나려는 탈코르셋 운동입니다.",
+    "e": "탈코르셋 운동은 사회가 여성에게 요구하는 획일적 외모 기준과 성적 대상화에 저항하여 주체적 자기 표현을 추구하는 사회문화적 젠더 운동입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "중세 유럽의 몸매 보정 속옷에서 유래하여, 현대적으로 여성에게 화장, 다이어트, 특정 외모 기준을 강제하는 사회적 규범을 상징하는 용어는? [교재 p.354-355, 워크북 p.155]",
+    "o": [
+      "코르셋 (Corset)",
+      "유니폼 (Uniform)",
+      "핑크칼라 (Pink collar)",
+      "유리천장 (Glass ceiling)"
+    ],
+    "a": 0,
+    "h": "여성의 몸을 억압하던 보정 속옷에서 따온 사회적 외모 규범의 상징어입니다.",
+    "e": "'코르셋'은 여성의 신체를 조이던 속옷에서 유래하여, 현대 사회에서 여성에게 강요되는 화장, 다이어트, 특정 패션 등의 외모 억압 기제를 상징합니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "서비스업(샤넬코리아 등)에서 여성 직원에게 용모 정돈을 이유로 30분 조기 출근 화장을 지시하여 논란이 되었던 것처럼, 꾸밈이 의무 노동으로 강요되는 현상을 뜻하는 용어는? [교재 p.355, 워크북 p.155]",
+    "o": [
+      "꾸밈 노동 (Adornment Labor)",
+      "감정 노동",
+      "돌봄 노동",
+      "그림자 노동"
+    ],
+    "a": 0,
+    "h": "여성 직원의 용모 유지가 사적 취향이 아닌 강제된 무급 시간 투입으로 나타나는 '꾸밈 노동' 현상입니다.",
+    "e": "꾸밈 노동은 직장에서 여성 근로자에게만 특정 화장, 헤어 스타일, 치마 유니폼 등을 요구하고 출근 전 준비 시간을 강제하는 성차별적 노동 형태입니다."
+  },
+  {
+    "type": "사례적용",
+    "q": "탈코르셋 운동의 영향으로 최근 한국 사회 직장 및 학교 현장에서 나타난 긍정적 변화 사례는? [교재 p.355, 워크북 p.155]",
+    "o": [
+      "여성 항공 승무원의 바지 유니폼 허용 및 여학생 교복의 치마/바지 선택권과 편한 교복 도입",
+      "모든 여학생의 화장을 법적으로 의무 강제화",
+      "남성 근로자 전원에게 굽 10cm 하이힐 착용 강제",
+      "모든 학교 유니폼의 전면 폐지와 교복 구속"
+    ],
+    "a": 0,
+    "h": "승무원 바지 유니폼 도입, 편한 교복 및 바지 교복 선택권 확대 등 편의성·실용성 중심 변화입니다.",
+    "e": "탈코르셋 운동의 긍정적 영향으로 항공사 여성 승무원의 바지 유니폼 허용, 여학생의 편한 바지 교복 선택권 확대 등 실용적이고 성평등한 용모 문화가 확산되었습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "탈코르셋 운동의 본질적 주장에 대한 올바른 설명은? [교재 p.355, 워크북 p.155]",
+    "o": [
+      "핵심은 화장 여부 자체가 아니라, 외모 가꾸기를 강요하는 사회적 압력에 저항하고 개인의 '자율적 선택권'을 확립하는 것이다.",
+      "화장을 하는 모든 여성은 페미니스트가 아니라고 비난하는 이분법 운동이다.",
+      "모든 여성의 머리카락을 삭발하도록 국가가 강제하는 법안 추진 운동이다.",
+      "남성들의 외모 관리를 100% 금지시키는 운동이다."
+    ],
+    "a": 0,
+    "h": "화장 행위 자체의 비난이 아니라 억압적 외모 강요에 맞서 여성 스스로 가꿀지 말지를 결정하는 주체적 선택권입니다.",
+    "e": "탈코르셋 운동은 화장이나 꾸밈을 선택할 것인가 하지 않을 것인가를 오롯이 개인의 주체적 '선택'에 맡겨야 하며, 사회가 특정 용모를 강제해서는 안 된다는 점을 강조합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "혐오 현상의 본질에 대해 사회복지학적으로 성찰한 진단으로 옳은 것은? [교재 p.356, 워크북 p.155]",
+    "o": [
+      "사회구조적 문제(일자리 부족 등)의 책임을 약자(이주민, 여성)에게 전가하는 프레임이다.",
+      "사회적 혐오는 개인의 신체 근육량 차이에서 발생하는 자연 현상이다.",
+      "혐오 표현이 늘어날수록 사회적 통합과 경제성장률이 상승한다.",
+      "정치권이 혐오를 이용하는 것은 사회적 연대를 높이기 위함이다."
+    ],
+    "a": 0,
+    "h": "구조적 부조리의 책임을 사회적 약자에게 전가하여 갈등을 유발하는 프레임이 혐오의 본질입니다.",
+    "e": "사회적 혐오는 사회 구조나 제도 실패의 진짜 원인을 직시하기보다 이주민, 여성 등 소수자에게 책임을 돌리는 희생양 프레임으로 작동합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국에 거주하는 이주여성의 수가 지속적으로 증가함에 따라 요구되는 사회복지 패러다임의 변화는? [교재 p.343, 워크북 p.150]",
+    "o": [
+      "이주여성을 일시적 시혜 대상이 아닌 사회의 정당한 구성원으로 인정하는 보편적 성평등 복지체계 구축",
+      "이주여성의 국내 체류 기간을 최대 1개월로 제한하고 강제 출국",
+      "이주여성에게만 100% 독자적 사회보험료를 10배 부과",
+      "다문화가족 지원 예산을 0원으로 전액 삭감"
+    ],
+    "a": 0,
+    "h": "이주여성을 소수자 시혜 대상에서 탈피시켜 정당한 권리 주체로 사회통합을 이루는 시각 전환입니다.",
+    "e": "이주여성과 다문화가족이 사회의 핵심 구성원으로 자리 잡음에 따라, 시혜적 동화 정책을 넘어 실질적 권리와 다양성을 존중하는 성평등 복지 체계로 전환해야 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "여성혐오 언어의 5가지 유형 중 SNS나 인터넷 댓글에서 '페미OO', 'OO나치'와 같이 여성 운동가를 비하하는 표현이 속하는 유형은? [교재 p.347, 워크북 p.152]",
+    "o": [
+      "사회참여 폄하형",
+      "소비 행태 비하형",
+      "모성 역할 고정형",
+      "디지털 혐오문화형"
+    ],
+    "a": 0,
+    "h": "여성주의 운동과 사회 발언을 왜곡·조롱하는 사회참여 폄하형입니다.",
+    "e": "사회참여 폄하형은 성평등을 위한 페미니즘이나 여성 권리 주장에 극단주의 프레임을 씌워 사회적 발언권을 약화시키려는 혐오 언어입니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "한국 사회에서 '혐오 경제'가 형성되는 데 기여한 SNS 및 플랫폼 미디어의 운용 매커니즘은? [교재 p.348-349, 워크북 p.153]",
+    "o": [
+      "자극적 분노와 갈등 콘텐츠일수록 높은 조회수를 기록하여 광고 수익으로 직결되는 '조회수 경제' 구조",
+      "모든 혐오 발언에 대해 즉각 과태료 1억 원을 부과하는 자동 정산 시스템",
+      "유튜브 플랫폼이 성평등 교육 영상에만 지원금을 무상 지급하는 시스템",
+      "익명 게시판 이용 시 주민등록번호를 공적 공개하는 시스템"
+    ],
+    "a": 0,
+    "h": "자극적 혐오와 갈등 유발이 클릭수·조회수를 유도하여 금전적 이익을 창출하는 조회수 경제 매커니즘입니다.",
+    "e": "SNS 플랫폼은 자극적인 갈등과 분노를 부추기는 혐오 콘텐츠일수록 유저 유입과 조회수가 증가해 수익이 극대화되는 '혐오 경제' 구조를 띠고 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "다문화 가정 아동이 학교 현장에서 겪게 되는 주요 교육적 어려움은? [교재 p.342, 워크북 p.151]",
+    "o": [
+      "언어 및 문화적 차이로 인한 학업 이수 부담, 학교 부적응 및 사회적 차별과 낙인 경험",
+      "국가로부터 100% 무상 전액 장학금을 받아 발생하는 과도한 수입",
+      "모든 과목 시험에서 자동으로 100점 가산점을 받는 특혜",
+      "학교 출석이 법적으로 전면 금지되는 현상"
+    ],
+    "a": 0,
+    "h": "언어장벽, 어머니의 한국어 미숙에 따른 자녀 양육 부담과 또래 집단의 편견·낙인 문제입니다.",
+    "e": "다문화가정 아동은 가정 내 언어 환경과 문화적 차이로 인해 학업 및 언어 발달에 어려움을 겪고, 학교 내 차별과 사회적 낙인으로 부적응을 경험할 수 있습니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "연령 차별(Ageism)에서 최근 청년세대를 향해 '젊은 꼰대(젊꼰)'라 비하하며 세대 내 분열을 초래하는 현상이 시사하는 바는? [교재 p.352, 워크북 p.153]",
+    "o": [
+      "연령 차별이 노인층뿐만 아니라 청년층 등 전 연령대로 확산되어 세대 간·세대 내 연대를 약화시킨다.",
+      "청년세대의 정년이 90세로 자동 연장된다.",
+      "세대 간 갈등이 완전히 소멸되었음을 의미한다.",
+      "모든 청년이 기업의 고위 임원으로 등극한다."
+    ],
+    "a": 0,
+    "h": "나이를 고정관념화하는 연령 차별이 청년층 내부로까지 확산되어 사회적 연대를 파괴함을 확인하세요.",
+    "e": "연령 차별은 노년층에 대한 꼰대 낙인뿐만 아니라 청년층에 대한 '젊꼰' 비하 등 전 연령대로 낙인표현이 확산되어 구성원 간 상호 이해와 연대를 훼손합니다."
+  },
+  {
+    "type": "법·제도 내용",
+    "q": "이주여성의 가정폭력 피해 시 체류자격 종속 문제를 해결하기 위해 제시되는 법적 개선 과제는? [교재 p.341-342, 워크북 p.151]",
+    "o": [
+      "남편의 신원보증 의존성을 없애고, 폭력 피해 증명 시 이주여성 독자적 체류자격 연장 및 변경 허용",
+      "가정폭력 피해 이주여성을 즉시 국외 강제 출국 조치",
+      "한국인 남편에게 형사 처벌 면제 특권을 부여",
+      "이주여성의 한국어 시험 합격을 의무화하고 미달 시 감금"
+    ],
+    "a": 0,
+    "h": "남편의 동의나 보증 없이도 폭력 피해 사실이 확인되면 체류자격을 독자 인정받도록 법을 개선하는 조치입니다.",
+    "e": "가정폭력 피해 이주여성을 보호하기 위해서는 체류자격 연장 시 한국인 배우자의 보증 의무를 폐지하고, 폭력 피해 시 독자적으로 체류자격을 유지할 수 있는 법적 안전망이 강화되어야 합니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "미디어가 성별 고정관념을 왜곡 재현함으로써 발생하는 문제점은? [교재 p.349, 워크북 p.153]",
+    "o": [
+      "여성을 정형화되고 수동적인 이미지로 반복 노출하여 차별적 인식을 고착화하고 혐오를 정당화함",
+      "성평등 지수가 자동으로 세계 최고 수준으로 급상승함",
+      "모든 방송 제작진이 여성으로 100% 교체됨",
+      "미디어 수용자의 성인지적 비판력이 완벽히 완성됨"
+    ],
+    "a": 0,
+    "h": "방송·광고가 여성을 성적 대상이나 주부로만 왜곡 묘사하여 성차별 편견을 사회적으로 정당화하는 위험입니다.",
+    "e": "미디어가 여성을 왜곡되거나 정형화된 성역할로 소비할 경우, 시청자들은 이를 현실로 내면화하여 성별 고정관념과 혐오를 강화하게 됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "신자유주의적 무한 경쟁 사회에서 소수자 우대 정책(적극적 조치 등)이 여성 혐오로 연결되는 기제는? [교재 p.349, 워크북 p.153]",
+    "o": [
+      "청년 실업과 자원 희소성 속에서 여성 우대 정책이 '역차별'로 잘못 인식되어 여성 집단에 대한 반발로 표출됨",
+      "여성 우대 정책으로 남성 전원의 소득이 10배 증가하기 때문",
+      "소수자 우대 정책이 실행되면 기업 생산성이 100% 파산하기 때문",
+      "모든 남성이 법적으로 취업을 포기하도록 강제되기 때문"
+    ],
+    "a": 0,
+    "h": "일자리와 기회가 부족한 상황에서 우대 조치를 자신의 기회를 빼앗는 역차별로 오인하여 약자에게 분노를 표출하는 기제입니다.",
+    "e": "신자유주의의 극심한 자원 경쟁하에서 적극적 평등실현조치(여성 목표제 등)는 일부 청년 남성들에게 자신들의 기회를 박탈하는 역차별로 인식되어 여성 혐오를 정당화하는 논리로 오용됩니다."
+  },
+  {
+    "type": "개념확인",
+    "q": "디지털 시민교육을 통해 혐오사회를 극복하고자 하는 여성복지적 실천 목표는? [교재 p.350, 워크북 p.153]",
+    "o": [
+      "온라인 공간에서의 비판적 정보 수용력을 키우고, 익명성에 숨은 차별·혐오 언어문화를 성평등하게 개선하는 것",
+      "모든 국민의 스마트폰 사용을 법적으로 전면 금지하는 것",
+      "온라인 커뮤니티 게시판을 정부가 100% 폐쇄하는 것",
+      "디지털 성범죄 가해자에게 표창장을 수여하는 것"
+    ],
+    "a": 0,
+    "h": "온라인상 밈과 짤 형태의 혐오 문화를 자각하고 성평등한 언어 습관을 함양하는 디지털 시민교육 목표입니다.",
+    "e": "디지털 시민교육은 익명성과 미디어 혐오 경제 속에서 사용자가 혐오 표현의 유익성·폭력성을 자각하고 성평등한 디지털 문화의 주체로 성장하도록 돕습니다."
+  },
+  {
+    "type": "내용이해",
+    "q": "제14장 '현안 및 쟁점 분석 (이주여성과 혐오 사회)' 단원의 전체 내용을 종합 요약한 결론으로 가장 적절한 것은? [교재 p.338-358, 워크북 p.150-159]",
+    "o": [
+      "이주여성의 다층적 취약성과 혐오 사회의 구조적 원인을 파악하고, 돌봄과 다양성을 존중하며 젠더 감수성 교육 및 시간·권리 기반 성평등 복지체계를 구축해야 한다.",
+      "한국 사회의 이주여성과 혐오 문제에 대한 모든 성차별은 완벽히 해결되었다.",
+      "탈코르셋 운동은 외모 관리를 하는 여성들을 처벌하기 위한 사상 검증 운동이다.",
+      "혐오 언어는 단순 유행어에 불과하므로 사회적 제재나 젠더 감수성 교육이 전혀 불필요하다."
+    ],
+    "a": 0,
+    "h": "이주여성의 법적·사회적 위험 해결과 혐오 사회의 구조적 기제 해체를 통한 성평등 사회 구축의 종합 결론입니다.",
+    "e": "14장은 한국 사회의 핵심 현안인 이주여성의 다층적 위험과 여성혐오 언어·백래시·조회수 경제의 구조적 원인을 분석하고, 젠더 감수성과 세대·성별 포용성을 바탕으로 한 복지적 대응을 제시합니다."
+        }
+    ];</script>
+
+<!-- ④ 프로그램 본체: 수정하지 마세요. -->
+<script>
+    var allQuestions = [];   // 검사를 통과한 전체 문제
+    var questions = [];      // 지금 풀고 있는 문제 묶음(전체 또는 틀린 문제)
+    var curIdx = 0;
+    var wrongCount = 0;      // 현재 문제에서 틀린 횟수
+    var correctFirst = 0;    // 이번 회차에서 한 번에 맞힌 문제 수
+    var missed = [];         // 이번 회차에서 한 번이라도 틀린 문제
+
+    document.title = '여성복지론 퀴즈 [제' + LECTURE.no + '장]';
+    document.getElementById('lecture-title').textContent = '제' + LECTURE.no + '장: ' + LECTURE.title;
+
+    /* ---------- 데이터 검사 ---------- */
+    function validateQuizData(data) {
+        var errors = [];
+        var warnings = [];
+        var valid = [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            errors.push({ tag: '전체', text: 'quizData가 비어 있거나 배열([ ])이 아닙니다.' });
+            return { errors: errors, warnings: warnings, valid: valid };
+        }
+
+        data.forEach(function (item, i) {
+            var tag = 'Q' + (i + 1);
+            var problems = [];
+
+            if (!item || typeof item !== 'object') {
+                problems.push('문제가 { } 형식이 아닙니다.');
+            } else {
+                if (typeof item.q !== 'string' || !item.q.trim()) {
+                    problems.push('q(질문)가 없거나 비어 있습니다.');
+                }
+
+                var oOk = Array.isArray(item.o);
+                if (!oOk) {
+                    problems.push('o(보기)가 배열([ ])이 아닙니다.');
+                } else {
+                    if (item.o.length < 2) {
+                        problems.push('보기가 ' + item.o.length + '개뿐입니다. 2개 이상 필요합니다.');
+                    }
+                    var bad = item.o.some(function (x) { return typeof x !== 'string' || !x.trim(); });
+                    if (bad) {
+                        problems.push('보기 중에 비어 있거나 글자가 아닌 항목이 있습니다.');
+                    } else {
+                        var uniq = {};
+                        item.o.forEach(function (x) { uniq[x.trim()] = true; });
+                        if (Object.keys(uniq).length !== item.o.length) {
+                            problems.push('똑같은 보기가 2개 이상 있습니다.');
+                        }
+                    }
+                }
+
+                if (typeof item.a === 'string') {
+                    problems.push('a(정답 번호)가 따옴표로 감싸져 있습니다("' + item.a + '"). 따옴표 없는 숫자로 바꾸세요.');
+                } else if (!Number.isInteger(item.a)) {
+                    problems.push('a(정답 번호)가 없거나 숫자가 아닙니다.');
+                } else if (oOk && (item.a < 0 || item.a >= item.o.length)) {
+                    if (item.a === item.o.length) {
+                        problems.push('a가 ' + item.a + '입니다. 번호는 0부터 세므로 보기가 ' + item.o.length + '개면 0~' + (item.o.length - 1) + ' 중 하나여야 합니다. 1부터 센 것 같아요(' + item.a + ' → ' + (item.a - 1) + ').');
+                    } else {
+                        problems.push('a가 ' + item.a + '로 보기 범위(0~' + (item.o.length - 1) + ')를 벗어났습니다.');
+                    }
+                }
+
+                if (typeof item.h !== 'string' || !item.h.trim()) {
+                    problems.push('h(힌트)가 없거나 비어 있습니다.');
+                }
+                if (typeof item.e !== 'string' || !item.e.trim()) {
+                    problems.push('e(해설)가 없거나 비어 있습니다.');
+                }
+            }
+
+            if (problems.length) {
+                problems.forEach(function (t) { errors.push({ tag: tag, text: t }); });
+            } else {
+                valid.push(item);
+            }
+        });
+
+        
+
+        return { errors: errors, warnings: warnings, valid: valid };
+    }
+
+    /* ---------- 검사 결과 화면 ---------- */
+    function showProblemScreen(opts) {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        document.getElementById('problem-title').textContent = opts.title;
+        document.getElementById('problem-summary').textContent = opts.summary;
+
+        var list = document.getElementById('problem-list');
+        list.innerHTML = '';
+        opts.items.forEach(function (it) {
+            var li = document.createElement('li');
+            if (it.warn) li.className = 'warn';
+            var tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = it.tag;
+            var txt = document.createElement('span');
+            txt.textContent = it.text;
+            li.appendChild(tag);
+            li.appendChild(txt);
+            list.appendChild(li);
+        });
+
+        var tips = document.getElementById('problem-tips');
+        tips.innerHTML = '';
+        if (opts.tips && opts.tips.length) {
+            tips.appendChild(document.createTextNode('자주 생기는 원인'));
+            var ul = document.createElement('ul');
+            opts.tips.forEach(function (t) {
+                var li = document.createElement('li');
+                li.textContent = t;
+                ul.appendChild(li);
+            });
+            tips.appendChild(ul);
+            tips.style.display = 'block';
+        } else {
+            tips.style.display = 'none';
+        }
+
+        var btn = document.getElementById('partial-btn');
+        if (opts.buttonText) {
+            btn.textContent = opts.buttonText;
+            btn.style.display = 'block';
+            btn.onclick = opts.onButton;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function startQuiz(list) {
+        allQuestions = list;
+        document.getElementById('problem-screen').style.display = 'none';
+        beginRound(list);
+    }
+
+    // 한 회차 시작: 전체 문제 또는 틀린 문제만 받아서 처음부터 진행
+    function beginRound(list) {
+        questions = list;
+        curIdx = 0;
+        correctFirst = 0;
+        missed = [];
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
+
+    function init() {
+        // 데이터 문법 오류: ③ 블록이 아예 실행되지 못한 경우
+        if (typeof quizData === 'undefined') {
+            var items = window.__dataErrors.map(function (er) {
+                return { tag: er.line ? ('약 ' + er.line + '줄') : '오류', text: er.msg };
+            });
+            if (!items.length) items.push({ tag: '오류', text: 'quizData를 찾을 수 없습니다. const quizData = [ ... ]; 형태가 맞는지 확인하세요.' });
+            showProblemScreen({
+                title: '⚠️ 퀴즈 데이터를 읽지 못했어요',
+                summary: '데이터 부분에 문법 오류가 있어서 프로그램이 멈췄습니다. 아래 줄 근처를 확인하세요.',
+                items: items,
+                tips: [
+                    '문장 안에 큰따옴표(")가 들어 있음 → 작은따옴표(\')로 바꾸기',
+                    '문제와 문제 사이 쉼표(,) 빠짐, 또는 맨 끝의 ]; 가 지워짐',
+                    '문장 한가운데에서 줄이 바뀜 (한 문장은 한 줄로)',
+                    '붙여넣은 글에 // 가 포함되어 뒷부분이 주석 처리됨'
+                ]
+            });
+            return;
+        }
+
+        var result = validateQuizData(quizData);
+
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            startQuiz(result.valid);
+            return;
+        }
+
+        var items = result.errors.map(function (er) { return { tag: er.tag, text: er.text }; })
+            .concat(result.warnings.map(function (w) { return { tag: w.tag, text: w.text, warn: true }; }));
+
+        var badCount = (Array.isArray(quizData) ? quizData.length : 0) - result.valid.length;
+        var hasErrors = result.errors.length > 0;
+
+        showProblemScreen({
+            title: hasErrors ? '⚠️ 고칠 곳이 ' + result.errors.length + '군데 있어요' : '확인해 볼 곳이 있어요',
+            summary: !hasErrors
+                ? '오류는 아니지만 한 번 확인해 보세요.'
+                : (badCount > 0
+                    ? '전체 ' + quizData.length + '문제 중 ' + badCount + '문제에 문제가 있습니다. 데이터를 고치고 새로고침하세요.'
+                    : '퀴즈 데이터를 확인하고 새로고침하세요.'),
+            items: items,
+            tips: hasErrors ? [
+                '정답 번호 a는 따옴표 없는 숫자이고, 첫 번째 보기가 0입니다',
+                '문제마다 type, q, o, a, h, e 가 모두 있어야 합니다'
+            ] : null,
+            buttonText: result.valid.length > 0
+                ? (hasErrors ? '오류 없는 ' + result.valid.length + '문제만 먼저 풀기' : '그대로 시작하기')
+                : null,
+            onButton: function () { startQuiz(result.valid); }
+        });
+    }
+
+    /* ---------- 퀴즈 진행 ---------- */
+    function loadQuestion() {
+        wrongCount = 0;
+        var q = questions[curIdx];
+
+        document.getElementById('progress-text').textContent = (curIdx + 1) + ' / ' + questions.length;
+        updateScore();
+        window.scrollTo(0, 0);
+        document.getElementById('question-type').textContent = q.type || '일반문제';
+        document.getElementById('question-text').textContent = 'Q' + (allQuestions.indexOf(q) + 1) + '. ' + q.q;
+
+        var container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.o.forEach(function (opt, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = function () { checkAnswer(idx, btn); };
+            container.appendChild(btn);
+        });
+
+        document.getElementById('hint-box').style.display = 'none';
+        document.getElementById('exp-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(idx, btn) {
+        var q = questions[curIdx];
+        var allBtns = document.querySelectorAll('.option-btn');
+
+        if (idx === q.a) {
+            btn.classList.add('correct');
+            allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+            if (wrongCount === 0) { correctFirst++; updateScore(); }
+            showExplanation();
+        } else {
+            wrongCount++;
+            if (wrongCount === 1) missed.push(q);
+            btn.classList.add('wrong');
+            btn.style.pointerEvents = 'none';
+
+            if (wrongCount === 1) {
+                document.getElementById('hint-text').textContent = q.h;
+                document.getElementById('hint-box').style.display = 'block';
+            } else {
+                allBtns[q.a].classList.add('correct');
+                allBtns.forEach(function (b) { b.style.pointerEvents = 'none'; });
+                showExplanation();
+            }
+        }
+    }
+
+    function showExplanation() {
+        var q = questions[curIdx];
+        document.getElementById('exp-text').textContent = q.e;
+        document.getElementById('exp-box').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // 풀던 중에 누르면 한 번 물어봅니다. (묻지 않으려면 if 문 세 줄을 지우세요)
+    function goList() {
+        if (curIdx > 0 && !confirm('퀴즈를 그만하고 목록으로 갈까요?\n지금까지 푼 기록은 저장되지 않아요.')) return;
+        location.href = 'index.html';
+    }
+
+    function nextQuestion() {
+        curIdx++;
+        if (curIdx < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    /* ---------- 점수와 다시 풀기 ---------- */
+    // 한 번에 맞힌 문제만 점수로 셉니다. (힌트를 본 뒤 맞히면 점수에 넣지 않아요)
+    function updateScore() {
+        document.getElementById('score-text').textContent = '한 번에 맞힌 문제 ' + correctFirst + '개';
+    }
+
+    function showResult() {
+        var total = questions.length;
+        var score = Math.round(correctFirst / total * 100);
+        var isRetry = total < allQuestions.length;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-title').textContent = isRetry ? '🔁 틀린 문제 복습을 마쳤습니다!' : '🎊 학습을 마쳤습니다!';
+        document.getElementById('result-score').textContent = score + '점';
+        document.getElementById('result-detail').textContent =
+            (isRetry ? '복습한 ' : '전체 ') + total + '문제 중 한 번에 맞힌 문제 ' + correctFirst + '개 (100점 만점)';
+
+        var msg;
+        if (score >= 90) msg = '진짜 수고 많이 하셨습니다, 학우님! A+ 당근 🥕';
+        else if (score >= 70) msg = '잘하고 계세요! 틀린 문제만 한 번 더 풀면 더 단단해져요.';
+        else msg = '괜찮아요. 틀린 문제를 해설과 함께 다시 풀어 보면 금방 늘어요.';
+        document.getElementById('result-msg').textContent = msg;
+
+        var details = document.getElementById('missed-details');
+        var list = document.getElementById('missed-list');
+        list.innerHTML = '';
+        missed.forEach(function (m) {
+            var li = document.createElement('li');
+            li.value = allQuestions.indexOf(m) + 1;
+            li.textContent = m.q;
+            list.appendChild(li);
+        });
+        details.open = false;
+        details.style.display = missed.length ? 'block' : 'none';
+        document.getElementById('missed-summary').textContent = '이번에 틀린 문제 ' + missed.length + '개 보기';
+
+        var retryBtn = document.getElementById('retry-missed-btn');
+        retryBtn.textContent = '❌ 틀린 문제만 다시 풀기 (' + missed.length + '문제)';
+        retryBtn.style.display = missed.length ? 'block' : 'none';
+
+        window.scrollTo(0, 0);
+    }
+
+    function retryAll() { beginRound(allQuestions); }
+    function retryMissed() { if (missed.length) beginRound(missed.slice()); }
+
+    init();
+</script>
+</body>
+</html>
